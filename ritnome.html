@@ -137,7 +137,7 @@ html,body{width:100%;height:100%;background:#000;font-family:Arial,sans-serif;co
     <div class="top-box"><div class="top-label">Hits</div><div class="top-val" id="hHits">0/25</div></div>
     <div class="top-box info-box"><div class="top-label">Tempo</div><div class="top-val">100 BPM</div></div>
     <div class="top-box"><div class="top-label">Pattern</div><div class="top-val" id="hPattern">Flow</div></div>
-    <div class="top-box"><div class="top-label">Best</div><div class="top-val" id="hBest">--</div></div>
+    <div class="top-box"><div class="top-label" id="hBestLbl">Best</div><div class="top-val" id="hBest">--</div></div>
     <div class="top-box"><div class="top-label">Time</div><div class="top-val" id="hTime">0.0</div></div>
   </div>
   <div class="msg-bar watch" id="msg">TAP LET'S GO!</div>
@@ -205,7 +205,7 @@ var BALL_SEAMS="url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/
 var PATTERN_LABELS={flow:'Flow',gonogo:'Go No Go',lane:'Lane',switch:'Switch',burst:'Burst',random:'Random'};
 
 var DEFAULT_INFO='Fixed at <strong>100 BPM</strong> — the light moves every beat, whether you tap it or not. No miss penalty, just no hit counted. Score is how fast you land every hit.';
-var GONOGO_INFO='Fixed at <strong>100 BPM</strong>. Tap only when it flashes <strong style="color:#ff1e3c">red</strong> — tap any other color and the round genuinely ends right there. This is the one mode with a real miss.';
+var GONOGO_INFO='Fixed at <strong>100 BPM</strong>. Tap only when it flashes <strong style="color:#ff1e3c">red</strong> — the round runs until <strong>25 total reds</strong> have flashed. Score is how many of those 25 you actually hit.';
 document.querySelectorAll('.pattern-btn').forEach(function(btn){
   btn.onclick=function(){
     currentPattern=btn.dataset.pattern;
@@ -389,6 +389,7 @@ function advance(){
     litCell(currentIdx,currentIsGo?GO_COLOR:NOGO_COLORS[Math.floor(Math.random()*NOGO_COLORS.length)]);
     if(currentIsGo){
       redCount++;
+      $('hBest').textContent=Math.max(0,25-redCount);
       if(redCount>=25){
         // The 25th red still gets its own full, fair flash window —
         // matching Reactific's own established timing exactly — the
@@ -448,6 +449,13 @@ function startRound(){
   $('hHits').textContent='0/'+currentTargetCount;
   $('hTime').textContent='0.0';
   $('hPattern').textContent=PATTERN_LABELS[currentPattern];
+  if(currentPattern==='gonogo'){
+    $('hBestLbl').textContent='Reds Left';
+    $('hBest').textContent='25';
+  }else{
+    $('hBestLbl').textContent='Best';
+    loadBest();
+  }
   msg('⚡ GO! TAP THE BALL','go');
   $('actBtn').disabled=true;
 
@@ -476,7 +484,7 @@ function handleTap(idx){
     // doesn't count, and the round just continues.
     if(!currentIsGo)return;
     hits++;
-    $('hHits').textContent=hits+'/'+redCount;
+    $('hHits').textContent=hits+'/'+currentTargetCount;
     return;
   }
   hits++;
@@ -532,7 +540,13 @@ function launchGame(nm){
   $('screen-intro').style.display='none';$('screen-game').style.display='flex';
   buildCourt();
   resizeCourtToFit();
-  loadBest();
+  if(currentPattern==='gonogo'){
+    $('hBestLbl').textContent='Reds Left';
+    $('hBest').textContent='25';
+  }else{
+    $('hBestLbl').textContent='Best';
+    loadBest();
+  }
   msg("TAP LET'S GO!",'watch');
   try{ if(!document.fullscreenElement && document.documentElement.requestFullscreen){ document.documentElement.requestFullscreen().catch(function(){}); } }catch(e){}
 }
