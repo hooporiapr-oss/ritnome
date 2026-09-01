@@ -28,6 +28,8 @@ html,body{width:100%;height:100%;background:#000;font-family:Arial,sans-serif;co
 .big-btn{width:100%;max-width:420px;height:68px;border:none;border-radius:20px;background:linear-gradient(135deg,#00e5ff,#0091ff);color:#031018;font-size:1.2rem;font-weight:900;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;box-shadow:0 0 40px rgba(0,229,255,.6);margin-bottom:14px}
 .big-btn:hover{transform:scale(1.03)}
 .pattern-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;width:100%;max-width:420px}
+.pattern-row.pattern-row-final{grid-template-columns:repeat(2,1fr);max-width:420px}
+.pattern-row.pattern-row-final .pattern-btn{height:64px;font-size:1rem}
 .pattern-btn{width:100%;min-width:0;height:58px;border:3px solid rgba(0,229,255,.4);background:rgba(0,229,255,.08);border-radius:14px;color:#fff;font-size:.9rem;font-weight:900;cursor:pointer;text-transform:uppercase;letter-spacing:.04em;padding:4px 2px}
 .pattern-btn.active{border-color:#00e5ff;background:rgba(0,229,255,.22);box-shadow:0 0 30px rgba(0,229,255,.6);color:#00e5ff}
 .pattern-btn small{display:block;font-size:.58rem;color:#a7adba;letter-spacing:.02em;white-space:normal;line-height:1.2}
@@ -116,12 +118,8 @@ html,body{width:100%;height:100%;background:#000;font-family:Arial,sans-serif;co
   <div class="rit-sub">Ritnome Basketball</div>
   <div class="rit-rule">The beat never waits. Tap as many as you can.</div>
 
-  <div class="pattern-row">
-    <button class="pattern-btn active" data-pattern="flow">Flow</button>
-    <button class="pattern-btn" data-pattern="gonogo">Go No Go</button>
-    <button class="pattern-btn" data-pattern="lane">Lane</button>
-    <button class="pattern-btn" data-pattern="switch">Switch</button>
-    <button class="pattern-btn" data-pattern="burst">Burst</button>
+  <div class="pattern-row pattern-row-final">
+    <button class="pattern-btn active" data-pattern="gonogo">Go No Go</button>
     <button class="pattern-btn" data-pattern="random">Reaction Speed</button>
   </div>
 
@@ -138,7 +136,7 @@ html,body{width:100%;height:100%;background:#000;font-family:Arial,sans-serif;co
   <div class="topbar">
     <div class="top-box"><div class="top-label">Hits</div><div class="top-val" id="hHits">0/25</div></div>
     <div class="top-box info-box"><div class="top-label">Tempo</div><div class="top-val" id="hTempo">100 BPM</div></div>
-    <div class="top-box"><div class="top-label">Pattern</div><div class="top-val" id="hPattern">Flow</div></div>
+    <div class="top-box"><div class="top-label">Pattern</div><div class="top-val" id="hPattern">Go No Go</div></div>
     <div class="top-box"><div class="top-label" id="hBestLbl">Best</div><div class="top-val" id="hBest">--</div></div>
     <div class="top-box"><div class="top-label">Time</div><div class="top-val" id="hTime">0.0</div></div>
   </div>
@@ -154,10 +152,10 @@ html,body{width:100%;height:100%;background:#000;font-family:Arial,sans-serif;co
 <div id="screen-box">
   <button class="box-back-btn" id="closeBoxBtn" style="margin-top:0;margin-bottom:20px">← Back</button>
   <div class="box-title">THE <span>STANDINGS</span></div>
-  <div class="box-sub" id="boxSub">Flow · Fastest 10 Hits</div>
+  <div class="box-sub" id="boxSub">Go No Go · Most Hits Out Of 25 Reds</div>
   <div class="standings-tab-row" id="standingsTabRow"></div>
   <div class="box-section">
-    <div class="box-section-label">Standings — Best Time Per Player</div>
+    <div class="box-section-label">Standings — Best Hit Count Per Player</div>
     <div id="standingsList"></div>
   </div>
 </div>
@@ -169,10 +167,9 @@ var $=id=>document.getElementById(id);
 // ══════════════════════════════════════════════════════
 //  STANDINGS — its own dedicated table, entirely separate from
 //  every other game's board on the platform. Every genuinely
-//  completed run (reaching the target hit count) gets recorded —
-//  the pattern and target count both saved alongside the time,
-//  since a 10-hit Flow run and a 25-hit Burst run aren't
-//  comparable numbers at all.
+//  completed run gets recorded — pattern, total flashes, and hits
+//  scored all saved alongside the time, since Go No Go and
+//  Reaction Speed each score by hit count, not by time at all.
 // ══════════════════════════════════════════════════════
 var SB_URL='https://sdaphocueugzfvjovuxd.supabase.co';
 var SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkYXBob2N1ZXVnemZ2am92dXhkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2MjQyMDgsImV4cCI6MjA5OTIwMDIwOH0.pDAzf4P6dD9eNEBlnP95SdF5BI-R84-Rdc0vKzYcn7M';
@@ -192,31 +189,28 @@ $('playerNameInputMain').addEventListener('keydown',function(e){
 });
 
 var ROWS=4,COLS=8,TOTAL_CELLS=32;
-// Fixed per pattern — 100 BPM for Flow, Lane, Switch, and Burst;
-// 80 BPM for Go No Go and Reaction Speed, both of which need a
-// little more room to actually read as a real reaction test rather
-// than a blur.
-function getCurrentBPM(){return(currentPattern==='gonogo'||currentPattern==='random')?80:100}
-var currentPattern='flow';
+// Both remaining patterns run at 80 BPM — a little more room than
+// the platform's usual 100 to actually read as a real reaction
+// test rather than a blur.
+function getCurrentBPM(){return 80}
+var currentPattern='gonogo';
 // Ritnome is now a fixed 25 hits, always — one comparable time per
 // pattern, not split across two different target counts.
 var currentTargetCount=25;
 
-// Random-color-cycling for Flow, Lane, Switch, and Burst. Reaction
-// Speed (the "random" pattern — a direct match for the standalone
-// Reaction Speed game, so it's renamed here to be honest about
-// that) always shows the same, consistent basketball orange —
-// one real ball, not a rainbow of differently-colored ones. Go No
-// Go keeps its own separate red/non-red — now orange/non-orange —
-// logic entirely (passed in via forceColor below).
-var COLORS=['#00e5ff','#ff3b8d','#ffd23f','#3ddc72','#ff6b35','#a855f7'];
+// Reaction Speed (the "random" pattern — a direct match for the
+// standalone Reaction Speed game, so it's renamed here to be
+// honest about that) always shows the same, consistent basketball
+// orange — one real ball, not a rainbow of differently-colored
+// ones. Go No Go keeps its own separate orange/non-orange logic
+// entirely (passed in via forceColor below).
 var BASKETBALL_ORANGE='#ff6b35';
 // The same basketball-seam texture used across Reaction Velocity's
 // own targets — layered over the random color, so each lit cell
 // genuinely reads as a basketball, not just a colored square.
 var BALL_SEAMS="url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Cdefs%3E%3CclipPath%20id%3D%22c%22%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2249%22/%3E%3C/clipPath%3E%3C/defs%3E%3Cg%20clip-path%3D%22url%28%23c%29%22%20fill%3D%22none%22%20stroke%3D%22rgba%280%2C0%2C0%2C.4%29%22%20stroke-width%3D%223.4%22%3E%3Cline%20x1%3D%2250%22%20y1%3D%22-4%22%20x2%3D%2250%22%20y2%3D%22104%22/%3E%3Cpath%20d%3D%22M%20-4%2050%20Q%2050%20-4%20104%2050%22/%3E%3Cpath%20d%3D%22M%20-4%2050%20Q%2050%20104%20104%2050%22/%3E%3Cellipse%20cx%3D%2250%22%20cy%3D%2250%22%20rx%3D%2224%22%20ry%3D%2249%22/%3E%3C/g%3E%3C/svg%3E')";
 
-var PATTERN_LABELS={flow:'Flow',gonogo:'Go No Go',lane:'Lane',switch:'Switch',burst:'Burst',random:'Reaction Speed'};
+var PATTERN_LABELS={gonogo:'Go No Go',random:'Reaction Speed'};
 
 var DEFAULT_INFO='Fixed at <strong>100 BPM</strong> — the light moves every beat, whether you tap it or not. No miss penalty, just no hit counted. Score is how fast you land every hit.';
 var GONOGO_INFO='Fixed at <strong>80 BPM</strong>. Tap only when it flashes <strong style="color:#ff6b35">orange</strong> — the round runs until <strong>25 total oranges</strong> have flashed. Score is how many of those 25 you actually hit.';
@@ -275,62 +269,23 @@ function playThump(){
 // ══════════════════════════════════════════════════════
 function idxOf(row,col){return row*COLS+col}
 
-var flowRow=0,flowCol=-1;
-function nextFlow(){
-  flowCol++;
-  if(flowCol>=COLS){flowCol=0;flowRow=Math.floor(Math.random()*ROWS)}
-  return idxOf(flowRow,flowCol);
-}
-
 // GO NO GO — Reactific's own core mechanic, brought into Ritnome.
-// The light still moves to a random cell every beat, like Random,
-// but now also cycles color — genuinely red only ~14%-30% of the
-// time, wandering each beat, matching Reactific's own established
-// rhythm exactly. Tap while it's red: a real hit. Tap on anything
-// else: the round genuinely ends right there — this is the one
-// pattern in Ritnome with a real, meaningful penalty for a wrong
-// tap, since restraint under pressure is the whole point of the
-// mechanic this mode is built from.
+// The light moves to a random cell every beat, but now also cycles
+// color — genuinely orange only ~14%-30% of the time, wandering
+// each beat, matching Reactific's own established rhythm exactly.
+// Tap while it's orange: a real hit. Tap on anything else: the
+// round genuinely ends right there — this is the one pattern in
+// Ritnome with a real, meaningful penalty for a wrong tap, since
+// restraint under pressure is the whole point of the mechanic this
+// mode is built from.
 var GO_COLOR='#ff6b35';
 var NOGO_COLORS=['#00e5ff','#ffd23f','#3ddc72','#a855f7','#c9c9d4','#ff3b8d'];
 var currentIsGo=false;
 function nextGoNoGo(){return Math.floor(Math.random()*TOTAL_CELLS)}
 
-var laneCol=0,laneRow=-1;
-function nextLane(){
-  laneRow++;
-  if(laneRow>=ROWS){laneRow=0;laneCol=Math.floor(Math.random()*COLS)}
-  return idxOf(laneRow,laneCol);
-}
-
-var switchOnRight=false;
-function nextSwitch(){
-  switchOnRight=!switchOnRight;
-  var col=switchOnRight?(COLS/2)+Math.floor(Math.random()*(COLS/2)):Math.floor(Math.random()*(COLS/2));
-  var row=Math.floor(Math.random()*ROWS);
-  return idxOf(row,col);
-}
-
-var burstAtCenter=false;
-function nextBurst(){
-  burstAtCenter=!burstAtCenter;
-  if(burstAtCenter){
-    var col=(COLS/2)-1+Math.floor(Math.random()*2);
-    var row=1+Math.floor(Math.random()*2);
-    return idxOf(row,col);
-  }
-  var edge=Math.floor(Math.random()*4);
-  var r,c;
-  if(edge===0){r=0;c=Math.floor(Math.random()*COLS)}
-  else if(edge===1){r=ROWS-1;c=Math.floor(Math.random()*COLS)}
-  else if(edge===2){r=Math.floor(Math.random()*ROWS);c=0}
-  else{r=Math.floor(Math.random()*ROWS);c=COLS-1}
-  return idxOf(r,c);
-}
-
 function nextRandom(){return Math.floor(Math.random()*TOTAL_CELLS)}
 
-var PATTERNS={flow:nextFlow,gonogo:nextGoNoGo,lane:nextLane,switch:nextSwitch,burst:nextBurst,random:nextRandom};
+var PATTERNS={gonogo:nextGoNoGo,random:nextRandom};
 
 // ── Court ──
 var cells=[];
@@ -347,7 +302,7 @@ function buildCourt(){
 }
 function litCell(idx,forceColor){
   var cell=cells[idx];
-  var color=forceColor||(currentPattern==='random'?BASKETBALL_ORANGE:COLORS[Math.floor(Math.random()*COLORS.length)]);
+  var color=forceColor||BASKETBALL_ORANGE;
   cell.style.setProperty('--lit-color',color);
   cell.style.background=BALL_SEAMS+', radial-gradient(circle at 35% 35%,'+color+','+color+'aa)';
   cell.style.backgroundSize='100% 100%, 100% 100%';
@@ -373,21 +328,6 @@ var startTime=0;
 var timerRAF=null;
 var schedulerId=null;
 var nextBeatTime=0;
-var bestTime=null;
-
-function loadBest(){
-  try{
-    var v=localStorage.getItem('ritnome-best-'+currentPattern);
-    bestTime=v?parseFloat(v):null;
-  }catch(e){bestTime=null}
-  $('hBest').textContent=bestTime!==null?bestTime.toFixed(2)+'s':'--';
-}
-function saveBestIfBetter(t){
-  if(bestTime===null||t<bestTime){
-    bestTime=t;
-    try{localStorage.setItem('ritnome-best-'+currentPattern,String(t))}catch(e){}
-  }
-}
 
 var hasTappedCurrent=false;
 function advance(){
@@ -461,10 +401,6 @@ function startRound(){
   ensureAudio();
   if(audioCtx.state==='suspended')audioCtx.resume();
 
-  flowRow=Math.floor(Math.random()*ROWS);flowCol=-1;
-  laneCol=Math.floor(Math.random()*COLS);laneRow=-1;
-  switchOnRight=false;
-  burstAtCenter=false;
   currentIsGo=false;
 
   phase='tapping';
@@ -480,12 +416,9 @@ function startRound(){
   if(currentPattern==='gonogo'){
     $('hBestLbl').textContent='Reds Left';
     $('hBest').textContent='25';
-  }else if(currentPattern==='random'){
+  }else{
     $('hBestLbl').textContent='Flashes Left';
     $('hBest').textContent='100';
-  }else{
-    $('hBestLbl').textContent='Best';
-    loadBest();
   }
   msg('⚡ GO! TAP THE BALL','go');
   $('actBtn').disabled=true;
@@ -527,19 +460,6 @@ function handleTap(idx){
       finishReactionSpeedRound(true);
     }
     return;
-  }
-  hits++;
-  $('hHits').textContent=hits+'/'+currentTargetCount;
-  if(hits>=currentTargetCount){
-    var finalTime=(performance.now()-startTime)/1000;
-    stopRound();
-    var isNewBest=bestTime===null||finalTime<bestTime;
-    saveBestIfBetter(finalTime);
-    loadBest();
-    recordScoreToStandings(currentPlayerName,currentPattern,finalTime,totalFlashes);
-    msg((isNewBest?'🏆 NEW BEST — ':'✅ DONE — ')+finalTime.toFixed(2)+'s','perfect');
-    $('actBtn').textContent='PLAY AGAIN';
-    $('actBtn').disabled=false;
   }
 }
 
@@ -602,12 +522,9 @@ function launchGame(nm){
   if(currentPattern==='gonogo'){
     $('hBestLbl').textContent='Reds Left';
     $('hBest').textContent='25';
-  }else if(currentPattern==='random'){
+  }else{
     $('hBestLbl').textContent='Flashes Left';
     $('hBest').textContent='100';
-  }else{
-    $('hBestLbl').textContent='Best';
-    loadBest();
   }
   msg("TAP LET'S GO!",'watch');
   try{ if(!document.fullscreenElement && document.documentElement.requestFullscreen){ document.documentElement.requestFullscreen().catch(function(){}); } }catch(e){}
@@ -619,14 +536,10 @@ function launchGame(nm){
 //  reverse of every score-based board elsewhere on the platform).
 // ══════════════════════════════════════════════════════
 var STANDINGS_PATTERNS=[
-  {key:'flow',label:'Flow'},
   {key:'gonogo',label:'Go No Go'},
-  {key:'lane',label:'Lane'},
-  {key:'switch',label:'Switch'},
-  {key:'burst',label:'Burst'},
   {key:'random',label:'Reaction Speed'}
 ];
-var currentStandingsPattern='flow';
+var currentStandingsPattern='gonogo';
 
 function fetchStandingsFor(patternKey){
   // Scoped to the current session's own school — two different
@@ -634,29 +547,20 @@ function fetchStandingsFor(patternKey){
   // same rule every gated game on the platform follows.
   var school=sessionStorage.getItem('ritnome-school')||'';
   var url=SB_URL+'/rest/v1/'+SB_TABLE+'?select=player_name,time_seconds,total_flashes,hits_scored&pattern=eq.'+encodeURIComponent(patternKey)+'&school_name=eq.'+encodeURIComponent(school);
-  var isHitCountBased=patternKey==='gonogo'||patternKey==='random';
   return fetch(url,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}})
     .then(function(r){if(!r.ok)throw new Error('bad response');return r.json()})
     .then(function(rows){
       var best={};
       (rows||[]).forEach(function(r){
         var existing=best[r.player_name];
-        if(isHitCountBased){
-          // Hit-count is the real score here — more is better, not
-          // a time at all.
-          if(!existing||r.hits_scored>existing.hitsScored){
-            best[r.player_name]={name:r.player_name,time:r.time_seconds,flashes:r.total_flashes,hitsScored:r.hits_scored};
-          }
-        }else{
-          if(!existing||r.time_seconds<existing.time){
-            best[r.player_name]={name:r.player_name,time:r.time_seconds,flashes:r.total_flashes,hitsScored:r.hits_scored};
-          }
+        // Hit-count is the real score for both remaining patterns —
+        // more is better, not a time at all.
+        if(!existing||r.hits_scored>existing.hitsScored){
+          best[r.player_name]={name:r.player_name,time:r.time_seconds,flashes:r.total_flashes,hitsScored:r.hits_scored};
         }
       });
       var list=Object.keys(best).map(function(n){return best[n]});
-      return isHitCountBased
-        ?list.sort(function(a,b){return b.hitsScored-a.hitsScored})
-        :list.sort(function(a,b){return a.time-b.time});
+      return list.sort(function(a,b){return b.hitsScored-a.hitsScored});
     });
 }
 
@@ -674,10 +578,8 @@ function renderStandingsForPattern(patternKey){
   currentStandingsPattern=patternKey;
   var patternConfig=STANDINGS_PATTERNS.filter(function(p){return p.key===patternKey})[0];
   var isGoNoGo=patternKey==='gonogo';
-  var isReactionSpeed=patternKey==='random';
-  var isHitCountBased=isGoNoGo||isReactionSpeed;
   renderStandingsTabs();
-  $('boxSub').textContent=patternConfig.label+(isGoNoGo?' · Most Hits Out Of 25 Reds':isReactionSpeed?' · Most Hits (25 Cap, 100 Max Flashes)':' · Fastest 25 Hits');
+  $('boxSub').textContent=patternConfig.label+(isGoNoGo?' · Most Hits Out Of 25 Reds':' · Most Hits (25 Cap, 100 Max Flashes)');
   var listEl=$('standingsList');
   listEl.innerHTML='<div class="box-empty">Loading standings…</div>';
 
@@ -701,56 +603,25 @@ function renderStandingsForPattern(patternKey){
           +'</div>'
           +'</div>';
       }
-      if(isReactionSpeed){
-        // The denominator reflects how that particular run actually
-        // ended — the real 25-hit target if reached, or the
-        // 100-flash cap if not. "Out Of" shows the real, total
-        // flashes it actually took to get there — genuinely
-        // different from the denominator itself, since a 25/25 run
-        // could take anywhere from a perfect 25 flashes up to
-        // nearly the full 100.
-        var hs=(p.hitsScored===null||p.hitsScored===undefined)?null:p.hitsScored;
-        var denom=(hs!==null&&hs>=25)?25:100;
-        mainScore=(hs===null?'--':hs)+'/'+denom;
-        return '<div class="standings-row standings-row-flat '+rankClass+'">'
-          +'<div class="standings-row-main">'
-            +'<span class="standings-rank">'+(i+1)+'</span>'
-            +'<span class="standings-name">'+safeName+'</span>'
-            +'<span><span class="standings-pts">'+mainScore+'</span><span class="standings-pts-sub">Out Of: '+flashesDisplay+'</span></span>'
-          +'</div>'
-          +'</div>';
-      }
-      // Hit rate — the 25 completed hits against the total
-      // flashes it actually took to land them.
-      var hitRate=p.flashes?((currentTargetCount/p.flashes)*100).toFixed(1):null;
-      mainScore=p.time.toFixed(2)+'s';
-      var detailHtml='<div class="sd-cell"><div class="sd-label">Total Flashes</div><div class="sd-val">'+flashesDisplay+'</div></div>'
-        +'<div class="sd-cell"><div class="sd-label">Hit Rate</div><div class="sd-val">'+(hitRate!==null?hitRate+'%':'--')+'</div></div>';
-      return '<div class="standings-row '+rankClass+'">'
+      // The denominator reflects how that particular run actually
+      // ended — the real 25-hit target if reached, or the 100-flash
+      // cap if not. "Out Of" shows the real, total flashes it
+      // actually took to get there — genuinely different from the
+      // denominator itself, since a 25/25 run could take anywhere
+      // from a perfect 25 flashes up to nearly the full 100.
+      var hs=(p.hitsScored===null||p.hitsScored===undefined)?null:p.hitsScored;
+      var denom=(hs!==null&&hs>=25)?25:100;
+      mainScore=(hs===null?'--':hs)+'/'+denom;
+      return '<div class="standings-row standings-row-flat '+rankClass+'">'
         +'<div class="standings-row-main">'
           +'<span class="standings-rank">'+(i+1)+'</span>'
           +'<span class="standings-name">'+safeName+'</span>'
-          +'<span class="standings-pts">'+mainScore+'</span>'
-          +'<span class="sr-chevron">▼</span>'
+          +'<span><span class="standings-pts">'+mainScore+'</span><span class="standings-pts-sub">Out Of: '+flashesDisplay+'</span></span>'
         +'</div>'
-        +'<div class="standings-detail"><div class="standings-detail-inner">'
-          +detailHtml
-        +'</div></div>'
         +'</div>';
     }).join('');
-    // Each row toggles its own detail open/closed — one player's
-    // breakdown expanding shouldn't affect any other row on the
-    // board, matching the same per-row toggle pattern used
-    // elsewhere on the platform. Go No Go and Reaction Speed's own
-    // rows have no detail to expand at all, so they're skipped
-    // here entirely.
-    if(!isHitCountBased){
-      listEl.querySelectorAll('.standings-row').forEach(function(row){
-        row.addEventListener('click',function(){
-          row.classList.toggle('open');
-        });
-      });
-    }
+    // Both remaining patterns are hit-count-based — flat rows, no
+    // detail to expand, so no click-to-toggle listener needed here.
   }).catch(function(){
     listEl.innerHTML='<div class="box-empty">Could not load standings right now — try again in a moment.</div>';
   });
