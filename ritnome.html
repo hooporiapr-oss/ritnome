@@ -365,7 +365,7 @@ var currentIdx=-1;
 var hits=0;
 var totalFlashes=0;
 var redCount=0;
-var gonogoEnding=false;
+var roundEnding=false;
 var startTime=0;
 var timerRAF=null;
 var schedulerId=null;
@@ -407,29 +407,41 @@ function advance(){
         // matching Reactific's own established timing exactly — the
         // round only actually ends once that response window has
         // passed, whether the player tapped it or not.
-        gonogoEnding=true;
-        scheduleGoNoGoEnd();
+        roundEnding=true;
+        scheduleRoundEnd();
       }
     }
   }else{
     currentIsGo=true;
     litCell(currentIdx);
+    if(currentPattern==='random'){
+      $('hBest').textContent=Math.max(0,100-totalFlashes);
+      if(totalFlashes>=100){
+        // Same fairness rule as Go No Go's own 25th red — the
+        // 100th flash still gets its own full response window
+        // before the round actually ends, whether it lands or not.
+        roundEnding=true;
+        scheduleRoundEnd();
+      }
+    }
   }
   playThump();
 }
 
-function scheduleGoNoGoEnd(){
+function scheduleRoundEnd(){
   setTimeout(function(){
-    if(phase==='tapping')finishGoNoGoRound();
+    if(phase!=='tapping')return;
+    if(currentPattern==='gonogo')finishGoNoGoRound();
+    else if(currentPattern==='random')finishReactionSpeedRound(false);
   },60000/getCurrentBPM());
 }
 
 function scheduleLoop(){
-  if(phase!=='tapping'||gonogoEnding)return;
+  if(phase!=='tapping'||roundEnding)return;
   while(nextBeatTime<audioCtx.currentTime+0.12){
     advance();
     nextBeatTime+=60/getCurrentBPM();
-    if(gonogoEnding)break;
+    if(roundEnding)break;
   }
   schedulerId=setTimeout(scheduleLoop,25);
 }
@@ -457,7 +469,7 @@ function startRound(){
   hits=0;
   totalFlashes=0;
   redCount=0;
-  gonogoEnding=false;
+  roundEnding=false;
   $('hHits').textContent='0/'+currentTargetCount;
   $('hTime').textContent='0.0';
   $('hTempo').textContent=getCurrentBPM()+' BPM';
@@ -465,6 +477,9 @@ function startRound(){
   if(currentPattern==='gonogo'){
     $('hBestLbl').textContent='Reds Left';
     $('hBest').textContent='25';
+  }else if(currentPattern==='random'){
+    $('hBestLbl').textContent='Flashes Left';
+    $('hBest').textContent='100';
   }else{
     $('hBestLbl').textContent='Best';
     loadBest();
@@ -500,6 +515,16 @@ function handleTap(idx){
     $('hHits').textContent=hits+'/'+currentTargetCount;
     return;
   }
+  if(currentPattern==='random'){
+    hits++;
+    $('hHits').textContent=hits+'/'+currentTargetCount;
+    if(hits>=25){
+      // Reached the real target early — the round ends right here,
+      // a genuine success, not waiting for the 100-flash cap at all.
+      finishReactionSpeedRound(true);
+    }
+    return;
+  }
   hits++;
   $('hHits').textContent=hits+'/'+currentTargetCount;
   if(hits>=currentTargetCount){
@@ -520,6 +545,18 @@ function finishGoNoGoRound(){
   stopRound();
   recordScoreToStandings(currentPlayerName,currentPattern,finalTime,totalFlashes,hits);
   msg('✅ DONE — '+hits+'/25 ORANGE HITS','perfect');
+  $('actBtn').textContent='PLAY AGAIN';
+  $('actBtn').disabled=false;
+}
+
+function finishReactionSpeedRound(reachedTarget){
+  var finalTime=(performance.now()-startTime)/1000;
+  stopRound();
+  recordScoreToStandings(currentPlayerName,currentPattern,finalTime,totalFlashes,hits);
+  // The denominator reflects how the round actually ended — the
+  // real 25-hit target if reached, or the 100-flash cap if not.
+  var denom=reachedTarget?25:100;
+  msg((reachedTarget?'🏆 25/25 — ':'✅ DONE — ')+hits+'/'+denom+' HITS','perfect');
   $('actBtn').textContent='PLAY AGAIN';
   $('actBtn').disabled=false;
 }
@@ -557,6 +594,9 @@ function launchGame(nm){
   if(currentPattern==='gonogo'){
     $('hBestLbl').textContent='Reds Left';
     $('hBest').textContent='25';
+  }else if(currentPattern==='random'){
+    $('hBestLbl').textContent='Flashes Left';
+    $('hBest').textContent='100';
   }else{
     $('hBestLbl').textContent='Best';
     loadBest();
@@ -586,16 +626,16 @@ function fetchStandingsFor(patternKey){
   // same rule every gated game on the platform follows.
   var school=sessionStorage.getItem('ritnome-school')||'';
   var url=SB_URL+'/rest/v1/'+SB_TABLE+'?select=player_name,time_seconds,total_flashes,hits_scored&pattern=eq.'+encodeURIComponent(patternKey)+'&school_name=eq.'+encodeURIComponent(school);
-  var isGoNoGo=patternKey==='gonogo';
+  var isHitCountBased=patternKey==='gonogo'||patternKey==='random';
   return fetch(url,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}})
     .then(function(r){if(!r.ok)throw new Error('bad response');return r.json()})
     .then(function(rows){
       var best={};
       (rows||[]).forEach(function(r){
         var existing=best[r.player_name];
-        if(isGoNoGo){
-          // Go No Go's own score is hits out of 25 red appearances
-          // — more is better, not a time at all.
+        if(isHitCountBased){
+          // Hit-count is the real score here — more is better, not
+          // a time at all.
           if(!existing||r.hits_scored>existing.hitsScored){
             best[r.player_name]={name:r.player_name,time:r.time_seconds,flashes:r.total_flashes,hitsScored:r.hits_scored};
           }
@@ -606,7 +646,7 @@ function fetchStandingsFor(patternKey){
         }
       });
       var list=Object.keys(best).map(function(n){return best[n]});
-      return isGoNoGo
+      return isHitCountBased
         ?list.sort(function(a,b){return b.hitsScored-a.hitsScored})
         :list.sort(function(a,b){return a.time-b.time});
     });
@@ -626,8 +666,10 @@ function renderStandingsForPattern(patternKey){
   currentStandingsPattern=patternKey;
   var patternConfig=STANDINGS_PATTERNS.filter(function(p){return p.key===patternKey})[0];
   var isGoNoGo=patternKey==='gonogo';
+  var isReactionSpeed=patternKey==='random';
+  var isHitCountBased=isGoNoGo||isReactionSpeed;
   renderStandingsTabs();
-  $('boxSub').textContent=patternConfig.label+(isGoNoGo?' · Most Hits Out Of 25 Reds':' · Fastest 25 Hits');
+  $('boxSub').textContent=patternConfig.label+(isGoNoGo?' · Most Hits Out Of 25 Reds':isReactionSpeed?' · Most Hits (25 Cap, 100 Max Flashes)':' · Fastest 25 Hits');
   var listEl=$('standingsList');
   listEl.innerHTML='<div class="box-empty">Loading standings…</div>';
 
@@ -643,6 +685,21 @@ function renderStandingsForPattern(patternKey){
       var mainScore;
       if(isGoNoGo){
         mainScore=(p.hitsScored===null||p.hitsScored===undefined?'--':p.hitsScored)+'/25';
+        return '<div class="standings-row standings-row-flat '+rankClass+'">'
+          +'<div class="standings-row-main">'
+            +'<span class="standings-rank">'+(i+1)+'</span>'
+            +'<span class="standings-name">'+safeName+'</span>'
+            +'<span class="standings-pts">'+mainScore+'</span>'
+          +'</div>'
+          +'</div>';
+      }
+      if(isReactionSpeed){
+        // The denominator reflects how that particular run actually
+        // ended — the real 25-hit target if reached, or the
+        // 100-flash cap if not.
+        var hs=(p.hitsScored===null||p.hitsScored===undefined)?null:p.hitsScored;
+        var denom=(hs!==null&&hs>=25)?25:100;
+        mainScore=(hs===null?'--':hs)+'/'+denom;
         return '<div class="standings-row standings-row-flat '+rankClass+'">'
           +'<div class="standings-row-main">'
             +'<span class="standings-rank">'+(i+1)+'</span>'
@@ -672,9 +729,10 @@ function renderStandingsForPattern(patternKey){
     // Each row toggles its own detail open/closed — one player's
     // breakdown expanding shouldn't affect any other row on the
     // board, matching the same per-row toggle pattern used
-    // elsewhere on the platform. Go No Go's own rows have no detail
-    // to expand at all, so they're skipped here entirely.
-    if(!isGoNoGo){
+    // elsewhere on the platform. Go No Go and Reaction Speed's own
+    // rows have no detail to expand at all, so they're skipped
+    // here entirely.
+    if(!isHitCountBased){
       listEl.querySelectorAll('.standings-row').forEach(function(row){
         row.addEventListener('click',function(){
           row.classList.toggle('open');
