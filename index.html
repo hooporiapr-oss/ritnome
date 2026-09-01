@@ -83,7 +83,7 @@ html,body{width:100%;height:100%;background:#000;font-family:Arial,sans-serif;co
 
   <div class="pattern-row">
     <button class="pattern-btn active" data-pattern="flow">Flow</button>
-    <button class="pattern-btn" data-pattern="cross">Cross</button>
+    <button class="pattern-btn" data-pattern="gonogo">Go No Go</button>
     <button class="pattern-btn" data-pattern="lane">Lane</button>
     <button class="pattern-btn" data-pattern="switch">Switch</button>
     <button class="pattern-btn" data-pattern="burst">Burst</button>
@@ -95,7 +95,7 @@ html,body{width:100%;height:100%;background:#000;font-family:Arial,sans-serif;co
   </div>
 
   <button class="big-btn" id="introStartBtn">▶ START THE BEAT</button>
-  <div class="intro-info">Fixed at <strong>100 BPM</strong> — the light moves every beat, whether you tap it or not. No miss penalty, just no hit counted. Score is how fast you land every hit.</div>
+  <div class="intro-info" id="introInfo">Fixed at <strong>100 BPM</strong> — the light moves every beat, whether you tap it or not. No miss penalty, just no hit counted. Score is how fast you land every hit.</div>
 
   <div style="margin-top:24px;font-size:.68rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#4a5058">Powered by <a href="https://ritnome.com" target="_blank" rel="noopener" style="color:#8892a0;font-style:italic;text-decoration:underline">Gostar Digital</a></div>
 </div>
@@ -132,13 +132,16 @@ var COLORS=['#00e5ff','#ff3b8d','#ffd23f','#3ddc72','#ff6b35','#a855f7'];
 // genuinely reads as a basketball, not just a colored square.
 var BALL_SEAMS="url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Cdefs%3E%3CclipPath%20id%3D%22c%22%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2249%22/%3E%3C/clipPath%3E%3C/defs%3E%3Cg%20clip-path%3D%22url%28%23c%29%22%20fill%3D%22none%22%20stroke%3D%22rgba%280%2C0%2C0%2C.4%29%22%20stroke-width%3D%223.4%22%3E%3Cline%20x1%3D%2250%22%20y1%3D%22-4%22%20x2%3D%2250%22%20y2%3D%22104%22/%3E%3Cpath%20d%3D%22M%20-4%2050%20Q%2050%20-4%20104%2050%22/%3E%3Cpath%20d%3D%22M%20-4%2050%20Q%2050%20104%20104%2050%22/%3E%3Cellipse%20cx%3D%2250%22%20cy%3D%2250%22%20rx%3D%2224%22%20ry%3D%2249%22/%3E%3C/g%3E%3C/svg%3E')";
 
-var PATTERN_LABELS={flow:'Flow',cross:'Cross',lane:'Lane',switch:'Switch',burst:'Burst',random:'Random'};
+var PATTERN_LABELS={flow:'Flow',gonogo:'Go No Go',lane:'Lane',switch:'Switch',burst:'Burst',random:'Random'};
 
+var DEFAULT_INFO='Fixed at <strong>100 BPM</strong> — the light moves every beat, whether you tap it or not. No miss penalty, just no hit counted. Score is how fast you land every hit.';
+var GONOGO_INFO='Fixed at <strong>100 BPM</strong>. Tap only when it flashes <strong style="color:#ff1e3c">red</strong> — tap any other color and the round genuinely ends right there. This is the one mode with a real miss.';
 document.querySelectorAll('.pattern-btn').forEach(function(btn){
   btn.onclick=function(){
     currentPattern=btn.dataset.pattern;
     document.querySelectorAll('.pattern-btn').forEach(function(b){b.classList.remove('active')});
     btn.classList.add('active');
+    $('introInfo').innerHTML=currentPattern==='gonogo'?GONOGO_INFO:DEFAULT_INFO;
   };
 });
 document.querySelectorAll('.count-btn').forEach(function(btn){
@@ -202,12 +205,19 @@ function nextFlow(){
   return idxOf(flowRow,flowCol);
 }
 
-var crossCorners=[idxOf(0,0),idxOf(ROWS-1,COLS-1),idxOf(0,COLS-1),idxOf(ROWS-1,0)];
-var crossStep=-1;
-function nextCross(){
-  crossStep=(crossStep+1)%crossCorners.length;
-  return crossCorners[crossStep];
-}
+// GO NO GO — Reactific's own core mechanic, brought into Ritnome.
+// The light still moves to a random cell every beat, like Random,
+// but now also cycles color — genuinely red only ~14%-30% of the
+// time, wandering each beat, matching Reactific's own established
+// rhythm exactly. Tap while it's red: a real hit. Tap on anything
+// else: the round genuinely ends right there — this is the one
+// pattern in Ritnome with a real, meaningful penalty for a wrong
+// tap, since restraint under pressure is the whole point of the
+// mechanic this mode is built from.
+var GO_COLOR='#ff1e3c';
+var NOGO_COLORS=['#00e5ff','#ffd23f','#3ddc72','#ff6b35','#a855f7','#c9c9d4'];
+var currentIsGo=false;
+function nextGoNoGo(){return Math.floor(Math.random()*TOTAL_CELLS)}
 
 var laneCol=0,laneRow=-1;
 function nextLane(){
@@ -243,7 +253,7 @@ function nextBurst(){
 
 function nextRandom(){return Math.floor(Math.random()*TOTAL_CELLS)}
 
-var PATTERNS={flow:nextFlow,cross:nextCross,lane:nextLane,switch:nextSwitch,burst:nextBurst,random:nextRandom};
+var PATTERNS={flow:nextFlow,gonogo:nextGoNoGo,lane:nextLane,switch:nextSwitch,burst:nextBurst,random:nextRandom};
 
 // ── Court ──
 var cells=[];
@@ -258,9 +268,9 @@ function buildCourt(){
     cells.push(c);
   }
 }
-function litCell(idx){
+function litCell(idx,forceColor){
   var cell=cells[idx];
-  var color=COLORS[Math.floor(Math.random()*COLORS.length)];
+  var color=forceColor||COLORS[Math.floor(Math.random()*COLORS.length)];
   cell.style.setProperty('--lit-color',color);
   cell.style.background=BALL_SEAMS+', radial-gradient(circle at 35% 35%,'+color+','+color+'aa)';
   cell.style.backgroundSize='100% 100%, 100% 100%';
@@ -302,7 +312,17 @@ function saveBestIfBetter(t){
 function advance(){
   if(currentIdx>=0)clearCell(currentIdx);
   currentIdx=PATTERNS[currentPattern]();
-  litCell(currentIdx);
+  if(currentPattern==='gonogo'){
+    // Red probability wanders ~14%-30% each beat, matching
+    // Reactific's own established rhythm exactly — no countable
+    // pattern to it.
+    var chance=0.14+Math.random()*0.16;
+    currentIsGo=Math.random()<chance;
+    litCell(currentIdx,currentIsGo?GO_COLOR:NOGO_COLORS[Math.floor(Math.random()*NOGO_COLORS.length)]);
+  }else{
+    currentIsGo=true;
+    litCell(currentIdx);
+  }
   playThump();
 }
 
@@ -328,10 +348,10 @@ function startRound(){
   if(audioCtx.state==='suspended')audioCtx.resume();
 
   flowRow=Math.floor(Math.random()*ROWS);flowCol=-1;
-  crossStep=-1;
   laneCol=Math.floor(Math.random()*COLS);laneRow=-1;
   switchOnRight=false;
   burstAtCenter=false;
+  currentIsGo=false;
 
   phase='tapping';
   currentIdx=-1;
@@ -358,6 +378,17 @@ function stopRound(){
 
 function handleTap(idx){
   if(phase!=='tapping'||idx!==currentIdx)return;
+  if(currentPattern==='gonogo'&&!currentIsGo){
+    // A real miss, genuinely — the round ends here, matching the
+    // established "a miss ends the round" convention from the rest
+    // of the platform, since restraint under pressure is the whole
+    // point of this specific mode.
+    stopRound();
+    msg('✗ NOT RED — MISSED','miss');
+    $('actBtn').textContent='TRY AGAIN';
+    $('actBtn').disabled=false;
+    return;
+  }
   hits++;
   $('hHits').textContent=hits+'/'+currentTargetCount;
   if(hits>=currentTargetCount){
