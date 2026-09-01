@@ -54,6 +54,7 @@ html,body{width:100%;height:100%;background:#000;font-family:Arial,sans-serif;co
 .standings-row.rank-3 .standings-rank{color:#fb923c}
 .standings-name{flex:1;color:#fff;font-weight:700;text-align:left}
 .standings-pts{color:#00e5ff;font-weight:900;font-size:1rem}
+.standings-pts-sub{display:block;color:#7d8ba3;font-weight:700;font-size:.62rem;letter-spacing:.03em;text-align:right;margin-top:1px}
 .sr-chevron{color:#7c8699;font-size:.7rem;transition:transform .18s}
 .standings-row.open .sr-chevron{transform:rotate(180deg)}
 .standings-detail{max-height:0;overflow:hidden;transition:max-height .2s ease}
@@ -703,7 +704,11 @@ function renderStandingsForPattern(patternKey){
       if(isReactionSpeed){
         // The denominator reflects how that particular run actually
         // ended — the real 25-hit target if reached, or the
-        // 100-flash cap if not.
+        // 100-flash cap if not. "Out Of" shows the real, total
+        // flashes it actually took to get there — genuinely
+        // different from the denominator itself, since a 25/25 run
+        // could take anywhere from a perfect 25 flashes up to
+        // nearly the full 100.
         var hs=(p.hitsScored===null||p.hitsScored===undefined)?null:p.hitsScored;
         var denom=(hs!==null&&hs>=25)?25:100;
         mainScore=(hs===null?'--':hs)+'/'+denom;
@@ -711,7 +716,7 @@ function renderStandingsForPattern(patternKey){
           +'<div class="standings-row-main">'
             +'<span class="standings-rank">'+(i+1)+'</span>'
             +'<span class="standings-name">'+safeName+'</span>'
-            +'<span class="standings-pts">'+mainScore+'</span>'
+            +'<span><span class="standings-pts">'+mainScore+'</span><span class="standings-pts-sub">Out Of: '+flashesDisplay+'</span></span>'
           +'</div>'
           +'</div>';
       }
