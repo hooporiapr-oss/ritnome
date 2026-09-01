@@ -571,7 +571,9 @@ function renderStandingsForPattern(patternKey){
       // Average score per completed play — the time this specific,
       // displayed run took, divided across the 25 hits within it,
       // not an average across a player's separate games.
-      var avgPerHit=(p.time/currentTargetCount).toFixed(2);
+      // Hit rate — the 25 completed hits against the total flashes
+      // it actually took to land them, not a time-based average.
+      var hitRate=p.flashes?((currentTargetCount/p.flashes)*100).toFixed(1):null;
       var flashesDisplay=(p.flashes===null||p.flashes===undefined)?'--':p.flashes;
       return '<div class="standings-row '+rankClass+'">'
         +'<div class="standings-row-main">'
@@ -582,7 +584,7 @@ function renderStandingsForPattern(patternKey){
         +'</div>'
         +'<div class="standings-detail"><div class="standings-detail-inner">'
           +'<div class="sd-cell"><div class="sd-label">Total Flashes</div><div class="sd-val">'+flashesDisplay+'</div></div>'
-          +'<div class="sd-cell"><div class="sd-label">Avg Per Hit</div><div class="sd-val">'+avgPerHit+'s</div></div>'
+          +'<div class="sd-cell"><div class="sd-label">Hit Rate</div><div class="sd-val">'+(hitRate!==null?hitRate+'%':'--')+'</div></div>'
         +'</div></div>'
         +'</div>';
     }).join('');
