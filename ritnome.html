@@ -177,11 +177,11 @@ var SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI
 var SB_TABLE='ritnome_standings';
 var currentPlayerName='';
 
-function recordScoreToStandings(name,pattern,timeSeconds,flashes){
+function recordScoreToStandings(name,pattern,timeSeconds,flashes,hitsScored){
   return fetch(SB_URL+'/rest/v1/'+SB_TABLE,{
     method:'POST',
     headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},
-    body:JSON.stringify({player_name:name,pattern:pattern,time_seconds:timeSeconds,total_flashes:flashes,school_name:sessionStorage.getItem('ritnome-school')||null})
+    body:JSON.stringify({player_name:name,pattern:pattern,time_seconds:timeSeconds,total_flashes:flashes,hits_scored:(hitsScored===undefined?null:hitsScored),school_name:sessionStorage.getItem('ritnome-school')||null})
   }).catch(function(){});
 }
 
@@ -352,6 +352,8 @@ var phase='idle';
 var currentIdx=-1;
 var hits=0;
 var totalFlashes=0;
+var redCount=0;
+var gonogoEnding=false;
 var startTime=0;
 var timerRAF=null;
 var schedulerId=null;
@@ -385,6 +387,17 @@ function advance(){
     var chance=0.14+Math.random()*0.16;
     currentIsGo=Math.random()<chance;
     litCell(currentIdx,currentIsGo?GO_COLOR:NOGO_COLORS[Math.floor(Math.random()*NOGO_COLORS.length)]);
+    if(currentIsGo){
+      redCount++;
+      if(redCount>=25){
+        // The 25th red still gets its own full, fair flash window —
+        // matching Reactific's own established timing exactly — the
+        // round only actually ends once that response window has
+        // passed, whether the player tapped it or not.
+        gonogoEnding=true;
+        scheduleGoNoGoEnd();
+      }
+    }
   }else{
     currentIsGo=true;
     litCell(currentIdx);
@@ -392,11 +405,18 @@ function advance(){
   playThump();
 }
 
+function scheduleGoNoGoEnd(){
+  setTimeout(function(){
+    if(phase==='tapping')finishGoNoGoRound();
+  },60000/VR_BPM);
+}
+
 function scheduleLoop(){
-  if(phase!=='tapping')return;
+  if(phase!=='tapping'||gonogoEnding)return;
   while(nextBeatTime<audioCtx.currentTime+0.12){
     advance();
     nextBeatTime+=60/VR_BPM;
+    if(gonogoEnding)break;
   }
   schedulerId=setTimeout(scheduleLoop,25);
 }
@@ -423,6 +443,8 @@ function startRound(){
   currentIdx=-1;
   hits=0;
   totalFlashes=0;
+  redCount=0;
+  gonogoEnding=false;
   $('hHits').textContent='0/'+currentTargetCount;
   $('hTime').textContent='0.0';
   $('hPattern').textContent=PATTERN_LABELS[currentPattern];
@@ -447,15 +469,14 @@ function handleTap(idx){
   if(phase!=='tapping'||idx!==currentIdx)return;
   if(hasTappedCurrent)return;
   hasTappedCurrent=true;
-  if(currentPattern==='gonogo'&&!currentIsGo){
-    // A real miss, genuinely — the round ends here, matching the
-    // established "a miss ends the round" convention from the rest
-    // of the platform, since restraint under pressure is the whole
-    // point of this specific mode.
-    stopRound();
-    msg('✗ NOT RED — MISSED','miss');
-    $('actBtn').textContent='TRY AGAIN';
-    $('actBtn').disabled=false;
+  if(currentPattern==='gonogo'){
+    // No round-ending penalty here — Go No Go is a fixed-length
+    // challenge now (25 total red appearances), not a
+    // survive-until-a-mistake one. Tapping a non-red cell simply
+    // doesn't count, and the round just continues.
+    if(!currentIsGo)return;
+    hits++;
+    $('hHits').textContent=hits+'/'+redCount;
     return;
   }
   hits++;
@@ -471,6 +492,15 @@ function handleTap(idx){
     $('actBtn').textContent='PLAY AGAIN';
     $('actBtn').disabled=false;
   }
+}
+
+function finishGoNoGoRound(){
+  var finalTime=(performance.now()-startTime)/1000;
+  stopRound();
+  recordScoreToStandings(currentPlayerName,currentPattern,finalTime,totalFlashes,hits);
+  msg('✅ DONE — '+hits+'/25 RED HITS','perfect');
+  $('actBtn').textContent='PLAY AGAIN';
+  $('actBtn').disabled=false;
 }
 
 // Keeps the court at a true 2:1 ratio (matching the drawn court
@@ -527,18 +557,30 @@ function fetchStandingsFor(patternKey){
   // access codes are two genuinely separate boards, matching the
   // same rule every gated game on the platform follows.
   var school=sessionStorage.getItem('ritnome-school')||'';
-  var url=SB_URL+'/rest/v1/'+SB_TABLE+'?select=player_name,time_seconds,total_flashes&order=time_seconds.asc&pattern=eq.'+encodeURIComponent(patternKey)+'&school_name=eq.'+encodeURIComponent(school);
+  var url=SB_URL+'/rest/v1/'+SB_TABLE+'?select=player_name,time_seconds,total_flashes,hits_scored&pattern=eq.'+encodeURIComponent(patternKey)+'&school_name=eq.'+encodeURIComponent(school);
+  var isGoNoGo=patternKey==='gonogo';
   return fetch(url,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}})
     .then(function(r){if(!r.ok)throw new Error('bad response');return r.json()})
     .then(function(rows){
       var best={};
       (rows||[]).forEach(function(r){
         var existing=best[r.player_name];
-        if(!existing||r.time_seconds<existing.time){
-          best[r.player_name]={name:r.player_name,time:r.time_seconds,flashes:r.total_flashes};
+        if(isGoNoGo){
+          // Go No Go's own score is hits out of 25 red appearances
+          // — more is better, not a time at all.
+          if(!existing||r.hits_scored>existing.hitsScored){
+            best[r.player_name]={name:r.player_name,time:r.time_seconds,flashes:r.total_flashes,hitsScored:r.hits_scored};
+          }
+        }else{
+          if(!existing||r.time_seconds<existing.time){
+            best[r.player_name]={name:r.player_name,time:r.time_seconds,flashes:r.total_flashes,hitsScored:r.hits_scored};
+          }
         }
       });
-      return Object.keys(best).map(function(n){return best[n]}).sort(function(a,b){return a.time-b.time});
+      var list=Object.keys(best).map(function(n){return best[n]});
+      return isGoNoGo
+        ?list.sort(function(a,b){return b.hitsScored-a.hitsScored})
+        :list.sort(function(a,b){return a.time-b.time});
     });
 }
 
@@ -555,8 +597,9 @@ function renderStandingsTabs(){
 function renderStandingsForPattern(patternKey){
   currentStandingsPattern=patternKey;
   var patternConfig=STANDINGS_PATTERNS.filter(function(p){return p.key===patternKey})[0];
+  var isGoNoGo=patternKey==='gonogo';
   renderStandingsTabs();
-  $('boxSub').textContent=patternConfig.label+' · Fastest 25 Hits';
+  $('boxSub').textContent=patternConfig.label+(isGoNoGo?' · Most Hits Out Of 25 Reds':' · Fastest 25 Hits');
   var listEl=$('standingsList');
   listEl.innerHTML='<div class="box-empty">Loading standings…</div>';
 
@@ -568,23 +611,30 @@ function renderStandingsForPattern(patternKey){
     listEl.innerHTML=ranked.map(function(p,i){
       var rankClass=i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'';
       var safeName=p.name.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-      // Average score per completed play — the time this specific,
-      // displayed run took, divided across the 25 hits within it,
-      // not an average across a player's separate games.
-      // Hit rate — the 25 completed hits against the total flashes
-      // it actually took to land them, not a time-based average.
-      var hitRate=p.flashes?((currentTargetCount/p.flashes)*100).toFixed(1):null;
       var flashesDisplay=(p.flashes===null||p.flashes===undefined)?'--':p.flashes;
+      var mainScore,detailHtml;
+      if(isGoNoGo){
+        mainScore=(p.hitsScored===null||p.hitsScored===undefined?'--':p.hitsScored)+'/25';
+        var timeDisplay=(p.time===null||p.time===undefined)?'--':p.time.toFixed(2)+'s';
+        detailHtml='<div class="sd-cell"><div class="sd-label">Total Flashes</div><div class="sd-val">'+flashesDisplay+'</div></div>'
+          +'<div class="sd-cell"><div class="sd-label">Time Taken</div><div class="sd-val">'+timeDisplay+'</div></div>';
+      }else{
+        // Hit rate — the 25 completed hits against the total
+        // flashes it actually took to land them.
+        var hitRate=p.flashes?((currentTargetCount/p.flashes)*100).toFixed(1):null;
+        mainScore=p.time.toFixed(2)+'s';
+        detailHtml='<div class="sd-cell"><div class="sd-label">Total Flashes</div><div class="sd-val">'+flashesDisplay+'</div></div>'
+          +'<div class="sd-cell"><div class="sd-label">Hit Rate</div><div class="sd-val">'+(hitRate!==null?hitRate+'%':'--')+'</div></div>';
+      }
       return '<div class="standings-row '+rankClass+'">'
         +'<div class="standings-row-main">'
           +'<span class="standings-rank">'+(i+1)+'</span>'
           +'<span class="standings-name">'+safeName+'</span>'
-          +'<span class="standings-pts">'+p.time.toFixed(2)+'s</span>'
+          +'<span class="standings-pts">'+mainScore+'</span>'
           +'<span class="sr-chevron">▼</span>'
         +'</div>'
         +'<div class="standings-detail"><div class="standings-detail-inner">'
-          +'<div class="sd-cell"><div class="sd-label">Total Flashes</div><div class="sd-val">'+flashesDisplay+'</div></div>'
-          +'<div class="sd-cell"><div class="sd-label">Hit Rate</div><div class="sd-val">'+(hitRate!==null?hitRate+'%':'--')+'</div></div>'
+          +detailHtml
         +'</div></div>'
         +'</div>';
     }).join('');
