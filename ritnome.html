@@ -45,13 +45,22 @@ html,body{width:100%;height:100%;background:#000;font-family:Arial,sans-serif;co
 .box-section-label{font-size:.65rem;font-weight:900;letter-spacing:.18em;text-transform:uppercase;color:#ffd35a;margin-bottom:8px;text-align:left;padding-left:4px}
 .box-empty{color:#7fa8c0;font-size:.85rem;padding:24px 8px;font-style:italic;text-align:center}
 .box-back-btn{width:100%;max-width:440px;height:56px;border:none;border-radius:16px;background:linear-gradient(135deg,#00e5ff,#0091ff);color:#031018;font-size:1rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;box-shadow:0 0 30px rgba(0,229,255,.6);margin-top:6px}
-.standings-row{font-size:.8rem;color:#9fb3c8;padding:10px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:12px}
+.standings-row{font-size:.8rem;color:#9fb3c8;padding:0;border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer}
+.standings-row-main{display:flex;align-items:center;gap:12px;padding:10px}
 .standings-rank{font-weight:900;font-size:1.05rem;color:#00e5ff;min-width:28px}
 .standings-row.rank-1 .standings-rank{color:#ffd35a}
 .standings-row.rank-2 .standings-rank{color:#c4b5fd}
 .standings-row.rank-3 .standings-rank{color:#fb923c}
 .standings-name{flex:1;color:#fff;font-weight:700;text-align:left}
 .standings-pts{color:#00e5ff;font-weight:900;font-size:1rem}
+.sr-chevron{color:#7c8699;font-size:.7rem;transition:transform .18s}
+.standings-row.open .sr-chevron{transform:rotate(180deg)}
+.standings-detail{max-height:0;overflow:hidden;transition:max-height .2s ease}
+.standings-row.open .standings-detail{max-height:120px}
+.standings-detail-inner{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;padding:0 12px 12px}
+.sd-cell{text-align:center;padding:10px 6px;border-radius:8px;background:rgba(255,255,255,.04)}
+.sd-label{font-size:.58rem;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:#8892a0;margin-bottom:4px}
+.sd-val{font-size:1rem;font-weight:900;color:#fff}
 .standings-tab-row{display:flex;gap:6px;width:100%;max-width:600px;margin-bottom:16px;flex-wrap:wrap;justify-content:center}
 .standings-tab{padding:8px 14px;border-radius:999px;border:1.5px solid rgba(255,255,255,.15);background:rgba(255,255,255,.04);color:#9fb3c8;font-size:.68rem;font-weight:900;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;white-space:nowrap}
 .standings-tab.active{border-color:#00e5ff;color:#00e5ff;background:rgba(0,229,255,.1)}
@@ -168,11 +177,11 @@ var SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI
 var SB_TABLE='ritnome_standings';
 var currentPlayerName='';
 
-function recordScoreToStandings(name,pattern,timeSeconds){
+function recordScoreToStandings(name,pattern,timeSeconds,flashes){
   return fetch(SB_URL+'/rest/v1/'+SB_TABLE,{
     method:'POST',
     headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},
-    body:JSON.stringify({player_name:name,pattern:pattern,time_seconds:timeSeconds,school_name:sessionStorage.getItem('ritnome-school')||null})
+    body:JSON.stringify({player_name:name,pattern:pattern,time_seconds:timeSeconds,total_flashes:flashes,school_name:sessionStorage.getItem('ritnome-school')||null})
   }).catch(function(){});
 }
 
@@ -342,6 +351,7 @@ function msg(txt,cls){var el=$('msg');el.textContent=txt;el.className='msg-bar '
 var phase='idle';
 var currentIdx=-1;
 var hits=0;
+var totalFlashes=0;
 var startTime=0;
 var timerRAF=null;
 var schedulerId=null;
@@ -362,7 +372,10 @@ function saveBestIfBetter(t){
   }
 }
 
+var hasTappedCurrent=false;
 function advance(){
+  totalFlashes++;
+  hasTappedCurrent=false;
   if(currentIdx>=0)clearCell(currentIdx);
   currentIdx=PATTERNS[currentPattern]();
   if(currentPattern==='gonogo'){
@@ -409,6 +422,7 @@ function startRound(){
   phase='tapping';
   currentIdx=-1;
   hits=0;
+  totalFlashes=0;
   $('hHits').textContent='0/'+currentTargetCount;
   $('hTime').textContent='0.0';
   $('hPattern').textContent=PATTERN_LABELS[currentPattern];
@@ -431,6 +445,8 @@ function stopRound(){
 
 function handleTap(idx){
   if(phase!=='tapping'||idx!==currentIdx)return;
+  if(hasTappedCurrent)return;
+  hasTappedCurrent=true;
   if(currentPattern==='gonogo'&&!currentIsGo){
     // A real miss, genuinely — the round ends here, matching the
     // established "a miss ends the round" convention from the rest
@@ -450,7 +466,7 @@ function handleTap(idx){
     var isNewBest=bestTime===null||finalTime<bestTime;
     saveBestIfBetter(finalTime);
     loadBest();
-    recordScoreToStandings(currentPlayerName,currentPattern,finalTime);
+    recordScoreToStandings(currentPlayerName,currentPattern,finalTime,totalFlashes);
     msg((isNewBest?'🏆 NEW BEST — ':'✅ DONE — ')+finalTime.toFixed(2)+'s','perfect');
     $('actBtn').textContent='PLAY AGAIN';
     $('actBtn').disabled=false;
@@ -511,7 +527,7 @@ function fetchStandingsFor(patternKey){
   // access codes are two genuinely separate boards, matching the
   // same rule every gated game on the platform follows.
   var school=sessionStorage.getItem('ritnome-school')||'';
-  var url=SB_URL+'/rest/v1/'+SB_TABLE+'?select=player_name,time_seconds&order=time_seconds.asc&pattern=eq.'+encodeURIComponent(patternKey)+'&school_name=eq.'+encodeURIComponent(school);
+  var url=SB_URL+'/rest/v1/'+SB_TABLE+'?select=player_name,time_seconds,total_flashes&order=time_seconds.asc&pattern=eq.'+encodeURIComponent(patternKey)+'&school_name=eq.'+encodeURIComponent(school);
   return fetch(url,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}})
     .then(function(r){if(!r.ok)throw new Error('bad response');return r.json()})
     .then(function(rows){
@@ -519,7 +535,7 @@ function fetchStandingsFor(patternKey){
       (rows||[]).forEach(function(r){
         var existing=best[r.player_name];
         if(!existing||r.time_seconds<existing.time){
-          best[r.player_name]={name:r.player_name,time:r.time_seconds};
+          best[r.player_name]={name:r.player_name,time:r.time_seconds,flashes:r.total_flashes};
         }
       });
       return Object.keys(best).map(function(n){return best[n]}).sort(function(a,b){return a.time-b.time});
@@ -540,7 +556,7 @@ function renderStandingsForPattern(patternKey){
   currentStandingsPattern=patternKey;
   var patternConfig=STANDINGS_PATTERNS.filter(function(p){return p.key===patternKey})[0];
   renderStandingsTabs();
-  $('boxSub').textContent=patternConfig.label+' · Fastest 10 Hits';
+  $('boxSub').textContent=patternConfig.label+' · Fastest 25 Hits';
   var listEl=$('standingsList');
   listEl.innerHTML='<div class="box-empty">Loading standings…</div>';
 
@@ -552,12 +568,33 @@ function renderStandingsForPattern(patternKey){
     listEl.innerHTML=ranked.map(function(p,i){
       var rankClass=i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'';
       var safeName=p.name.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      // Average score per completed play — the time this specific,
+      // displayed run took, divided across the 25 hits within it,
+      // not an average across a player's separate games.
+      var avgPerHit=(p.time/currentTargetCount).toFixed(2);
+      var flashesDisplay=(p.flashes===null||p.flashes===undefined)?'--':p.flashes;
       return '<div class="standings-row '+rankClass+'">'
-        +'<span class="standings-rank">'+(i+1)+'</span>'
-        +'<span class="standings-name">'+safeName+'</span>'
-        +'<span class="standings-pts">'+p.time.toFixed(2)+'s</span>'
+        +'<div class="standings-row-main">'
+          +'<span class="standings-rank">'+(i+1)+'</span>'
+          +'<span class="standings-name">'+safeName+'</span>'
+          +'<span class="standings-pts">'+p.time.toFixed(2)+'s</span>'
+          +'<span class="sr-chevron">▼</span>'
+        +'</div>'
+        +'<div class="standings-detail"><div class="standings-detail-inner">'
+          +'<div class="sd-cell"><div class="sd-label">Total Flashes</div><div class="sd-val">'+flashesDisplay+'</div></div>'
+          +'<div class="sd-cell"><div class="sd-label">Avg Per Hit</div><div class="sd-val">'+avgPerHit+'s</div></div>'
+        +'</div></div>'
         +'</div>';
     }).join('');
+    // Each row toggles its own detail open/closed — one player's
+    // breakdown expanding shouldn't affect any other row on the
+    // board, matching the same per-row toggle pattern used
+    // elsewhere on the platform.
+    listEl.querySelectorAll('.standings-row').forEach(function(row){
+      row.addEventListener('click',function(){
+        row.classList.toggle('open');
+      });
+    });
   }).catch(function(){
     listEl.innerHTML='<div class="box-empty">Could not load standings right now — try again in a moment.</div>';
   });
