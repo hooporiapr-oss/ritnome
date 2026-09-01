@@ -2,587 +2,138 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Ritnome Basketball</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Ritnome Basketball · Access</title>
 <style>
-/* -- Ritnome Basketball (embedded, own scope) -- */
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{
+    height:100%;overflow:hidden;
+    font-family:Arial,Helvetica,sans-serif;color:#fff;
+    background:#000;
+    user-select:none;-webkit-user-select:none;
+    touch-action:manipulation;
+  }
 
-*{margin:0;padding:0;box-sizing:border-box}
-html,body{width:100%;height:100%;background:#000;font-family:Arial,sans-serif;color:#fff;overflow:hidden;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+  #stage{
+    position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+    padding:24px;
+    background:radial-gradient(ellipse at center,#001018 0%,#000 70%);
+  }
 
-#screen-intro{
-  position:fixed;inset:0;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;
-  background:radial-gradient(ellipse at center,#001018 0%,#000 70%);z-index:100;
-  overflow-y:auto;overflow-x:hidden;
-  padding:20px 16px 24px;
-  box-sizing:border-box;
-}
-.rit-sub{font-size:.75rem;letter-spacing:.3em;text-transform:uppercase;color:#00e5ff;margin-bottom:8px;text-align:center}
-.rit-rule{font-size:.9rem;color:#ffd35a;font-weight:900;letter-spacing:.2em;text-transform:uppercase;margin-bottom:20px;text-align:center}
-.big-btn{width:100%;max-width:420px;height:68px;border:none;border-radius:20px;background:linear-gradient(135deg,#00e5ff,#0091ff);color:#031018;font-size:1.2rem;font-weight:900;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;box-shadow:0 0 40px rgba(0,229,255,.6);margin-bottom:14px}
-.big-btn:hover{transform:scale(1.03)}
-.pattern-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;width:100%;max-width:420px}
-.pattern-btn{width:100%;min-width:0;height:58px;border:3px solid rgba(0,229,255,.4);background:rgba(0,229,255,.08);border-radius:14px;color:#fff;font-size:.9rem;font-weight:900;cursor:pointer;text-transform:uppercase;letter-spacing:.04em;padding:4px 2px}
-.pattern-btn.active{border-color:#00e5ff;background:rgba(0,229,255,.22);box-shadow:0 0 30px rgba(0,229,255,.6);color:#00e5ff}
-.pattern-btn small{display:block;font-size:.58rem;color:#a7adba;letter-spacing:.02em;white-space:normal;line-height:1.2}
-.intro-info{font-size:.75rem;color:#8892a0;letter-spacing:.1em;text-transform:uppercase;text-align:center;line-height:1.8;width:100%;max-width:420px}
-.intro-info strong{color:#ffd35a}
-.name-input{width:100%;max-width:420px;padding:14px;border-radius:14px;border:2px solid rgba(0,229,255,.4);background:rgba(255,255,255,.05);color:#fff;font-family:Arial,sans-serif;font-size:1rem;text-align:center}
-.name-input:focus{outline:none;border-color:#00e5ff;box-shadow:0 0 20px rgba(0,229,255,.3)}
-.box-open-btn{width:100%;max-width:420px;height:52px;border:2px solid rgba(0,229,255,.5);background:rgba(0,229,255,.1);border-radius:14px;color:#00e5ff;font-size:.9rem;font-weight:900;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;margin-top:6px}
+  #panel{width:100%;max-width:400px;text-align:center}
+  .sub{font-size:.85rem;color:#9fb3c8;letter-spacing:.02em;margin-bottom:44px}
 
-#screen-box{position:fixed;inset:0;z-index:58;display:none;flex-direction:column;align-items:center;justify-content:flex-start;background:radial-gradient(ellipse at center,#001018 0%,#000 70%);padding:24px;overflow-y:auto}
-.box-title{font-size:1.7rem;font-weight:900;font-style:italic;letter-spacing:.06em;text-transform:uppercase;color:#fff;text-shadow:0 0 40px rgba(0,229,255,.8);margin-bottom:2px}
-.box-title span{color:#00e5ff}
-.box-sub{font-size:.65rem;letter-spacing:.24em;text-transform:uppercase;color:#00e5ff;margin-bottom:22px}
-.box-section{width:100%;max-width:600px;margin-bottom:24px}
-.box-section-label{font-size:.65rem;font-weight:900;letter-spacing:.18em;text-transform:uppercase;color:#ffd35a;margin-bottom:8px;text-align:left;padding-left:4px}
-.box-empty{color:#7fa8c0;font-size:.85rem;padding:24px 8px;font-style:italic;text-align:center}
-.box-back-btn{width:100%;max-width:440px;height:56px;border:none;border-radius:16px;background:linear-gradient(135deg,#00e5ff,#0091ff);color:#031018;font-size:1rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;box-shadow:0 0 30px rgba(0,229,255,.6);margin-top:6px}
-.standings-row{font-size:.8rem;color:#9fb3c8;padding:10px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:12px}
-.standings-rank{font-weight:900;font-size:1.05rem;color:#00e5ff;min-width:28px}
-.standings-row.rank-1 .standings-rank{color:#ffd35a}
-.standings-row.rank-2 .standings-rank{color:#c4b5fd}
-.standings-row.rank-3 .standings-rank{color:#fb923c}
-.standings-name{flex:1;color:#fff;font-weight:700;text-align:left}
-.standings-pts{color:#00e5ff;font-weight:900;font-size:1rem}
-.standings-tab-row{display:flex;gap:6px;width:100%;max-width:600px;margin-bottom:16px;flex-wrap:wrap;justify-content:center}
-.standings-tab{padding:8px 14px;border-radius:999px;border:1.5px solid rgba(255,255,255,.15);background:rgba(255,255,255,.04);color:#9fb3c8;font-size:.68rem;font-weight:900;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;white-space:nowrap}
-.standings-tab.active{border-color:#00e5ff;color:#00e5ff;background:rgba(0,229,255,.1)}
+  .code-panel{width:100%}
+  .code-label{font-size:.68rem;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#8892a0;margin-bottom:10px}
+  .code-input{
+    width:100%;padding:16px;border-radius:12px;border:2px solid rgba(0,229,255,.4);
+    background:rgba(255,255,255,.05);color:#fff;font-size:1.4rem;font-weight:900;
+    letter-spacing:.25em;text-transform:uppercase;text-align:center;font-family:'Courier New',monospace;
+  }
+  .code-input:focus{outline:none;border-color:#00e5ff;box-shadow:0 0 24px rgba(0,229,255,.35)}
+  .code-input.shake{animation:shake .35s}
+  @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px)}40%{transform:translateX(10px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
 
-@media (max-width:420px){
-  #screen-intro{padding:16px 12px 20px}
-  .rit-sub{font-size:.62rem;margin-bottom:6px}
-  .rit-rule{font-size:.7rem;margin-bottom:14px}
-  .pattern-row{gap:5px}
-  .pattern-btn{height:50px;font-size:.78rem}
-  .pattern-btn small{font-size:.5rem}
-  .big-btn{height:56px;font-size:1rem;margin-bottom:10px}
-  .intro-info{font-size:.62rem;line-height:1.6}
-}
+  .enter-btn{
+    width:100%;margin-top:16px;padding:15px;border:none;border-radius:12px;
+    background:linear-gradient(135deg,#00e5ff,#0091ff);color:#031018;
+    font-size:1rem;font-weight:900;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;
+    box-shadow:0 0 30px rgba(0,229,255,.5);
+  }
+  .enter-btn:active{transform:scale(.98)}
 
-#screen-game{
-  position:fixed;inset:0;display:none;flex-direction:column;
-  background:#000;overflow:hidden;
-}
-.topbar{display:flex;justify-content:center;flex-wrap:wrap;gap:6px;padding:8px 10px 4px;flex-shrink:0}
-.top-box{background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.3);border-radius:10px;padding:5px 10px;text-align:center;min-width:64px}
-.top-box.info-box{border-color:rgba(255,211,90,.3);background:rgba(255,211,90,.08)}
-.top-label{font-size:.55rem;color:#a7adba;text-transform:uppercase;letter-spacing:.06em}
-.top-val{font-size:1.05rem;font-weight:900;color:#fff}
-.msg-bar{text-align:center;padding:8px;font-size:.9rem;font-weight:900;letter-spacing:.06em;text-transform:uppercase;flex-shrink:0}
-.msg-bar.watch{color:#00e5ff}
-.msg-bar.go{color:#00D9A5}
-.msg-bar.perfect{color:#ffd700}
-.msg-bar.miss{color:#FF1493}
+  .err{margin-top:14px;color:#ff8888;font-size:.85rem;font-weight:700;min-height:18px}
 
-.court-area{flex:1;display:flex;align-items:center;justify-content:center;padding:6px;min-height:0}
-.court{display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(4,1fr);gap:6px;width:100%;height:100%;border:2px solid rgba(0,229,255,.35);border-radius:14px;padding:6px;background-color:#050810;background-image:url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20200%20100%22%3E%0A%20%20%3Crect%20width%3D%22200%22%20height%3D%22100%22%20fill%3D%22%23050810%22/%3E%0A%20%20%3Crect%20x%3D%221%22%20y%3D%221%22%20width%3D%22198%22%20height%3D%2298%22%20fill%3D%22none%22%20stroke%3D%22rgba%28120%2C180%2C255%2C.35%29%22%20stroke-width%3D%221.5%22/%3E%0A%20%20%3Cline%20x1%3D%22100%22%20y1%3D%221%22%20x2%3D%22100%22%20y2%3D%2299%22%20stroke%3D%22rgba%28120%2C180%2C255%2C.35%29%22%20stroke-width%3D%221.5%22/%3E%0A%20%20%3Ccircle%20cx%3D%22100%22%20cy%3D%2250%22%20r%3D%2213%22%20fill%3D%22none%22%20stroke%3D%22rgba%28120%2C180%2C255%2C.35%29%22%20stroke-width%3D%221.5%22/%3E%0A%20%20%3Crect%20x%3D%221%22%20y%3D%2231%22%20width%3D%2238%22%20height%3D%2238%22%20fill%3D%22rgba%280%2C229%2C255%2C.06%29%22%20stroke%3D%22rgba%28120%2C180%2C255%2C.35%29%22%20stroke-width%3D%221.5%22/%3E%0A%20%20%3Ccircle%20cx%3D%2239%22%20cy%3D%2250%22%20r%3D%2213%22%20fill%3D%22none%22%20stroke%3D%22rgba%28120%2C180%2C255%2C.35%29%22%20stroke-width%3D%221.5%22/%3E%0A%20%20%3Cpath%20d%3D%22M%201%2C10%20A%2084%2C84%200%200%2C1%2061%2C50%20A%2084%2C84%200%200%2C1%201%2C90%22%20fill%3D%22none%22%20stroke%3D%22rgba%28120%2C180%2C255%2C.3%29%22%20stroke-width%3D%221.5%22/%3E%0A%20%20%3Crect%20x%3D%22161%22%20y%3D%2231%22%20width%3D%2238%22%20height%3D%2238%22%20fill%3D%22rgba%280%2C229%2C255%2C.06%29%22%20stroke%3D%22rgba%28120%2C180%2C255%2C.35%29%22%20stroke-width%3D%221.5%22/%3E%0A%20%20%3Ccircle%20cx%3D%22161%22%20cy%3D%2250%22%20r%3D%2213%22%20fill%3D%22none%22%20stroke%3D%22rgba%28120%2C180%2C255%2C.35%29%22%20stroke-width%3D%221.5%22/%3E%0A%20%20%3Cpath%20d%3D%22M%20199%2C10%20A%2084%2C84%200%200%2C0%20139%2C50%20A%2084%2C84%200%200%2C0%20199%2C90%22%20fill%3D%22none%22%20stroke%3D%22rgba%28120%2C180%2C255%2C.3%29%22%20stroke-width%3D%221.5%22/%3E%0A%3C/svg%3E%0A');background-size:100% 100%;box-shadow:0 0 60px rgba(0,229,255,.2),inset 0 0 40px rgba(0,229,255,.05),0 20px 60px rgba(0,0,0,.8)}
-.cell{border-radius:8px;background:rgba(120,180,255,.03);border:2px solid rgba(120,180,255,.16);transition:border-color .3s ease,box-shadow .3s ease,border-radius .3s ease;touch-action:manipulation}
-.cell.lit{border-radius:50%;border-color:var(--lit-color,#00e5ff);box-shadow:0 0 26px var(--lit-color,#00e5ff);transition:border-color .05s ease,box-shadow .05s ease,border-radius .05s ease}
+  .brandmark{margin-top:50px;font-size:.68rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#4a5058}
+  .brandmark b{color:#8892a0;font-style:italic}
 
-.bottombar{display:flex;justify-content:center;flex-wrap:wrap;padding:4px 10px 6px;gap:8px;flex-shrink:0}
-.bot-btn{height:48px;flex:0 1 150px;max-width:180px;border:2px solid rgba(0,229,255,.5);background:rgba(0,0,0,.4);border-radius:12px;color:#fff;font-size:1rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
-.bot-btn span{display:block;color:#00e5ff;font-size:.55rem;margin-top:1px}
-.start-btn{border-color:#00e5ff;background:linear-gradient(180deg,#4de0ff,#00e5ff);color:#031018;font-size:1.1rem;box-shadow:0 0 18px rgba(0,229,255,.7)}
-.start-btn:disabled{opacity:.5}
-
-@media (max-width:768px){
-  #fsBtn{display:none}
-}
+  .gate-title{font-size:1.8rem;font-weight:900;font-style:italic;letter-spacing:.02em;text-transform:uppercase;margin-bottom:10px;text-shadow:0 0 30px rgba(0,229,255,.6)}
+  .gate-title span{color:#00e5ff}
+  @media(max-width:480px){ .gate-title{font-size:1.35rem} }
 </style>
 </head>
 <body>
-<div id="screen-intro">
-  <button style="position:fixed;top:16px;left:16px;padding:8px 16px;border:2px solid rgba(255,255,255,.25);background:rgba(0,0,0,.5);color:#fff;font-size:.78rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;border-radius:999px;cursor:pointer;z-index:120" id="introBackBtn" type="button">← Back</button>
 
-  <div class="rit-sub">Ritnome Basketball</div>
-  <div class="rit-rule">The beat never waits. Tap as many as you can.</div>
+<div id="stage">
+  <div id="panel">
+    <div class="gate-title">RIT<span>NOME</span></div>
+    <div class="sub" id="gate-sub">Enter Your Access Code</div>
 
-  <div class="pattern-row">
-    <button class="pattern-btn active" data-pattern="flow">Flow</button>
-    <button class="pattern-btn" data-pattern="gonogo">Go No Go</button>
-    <button class="pattern-btn" data-pattern="lane">Lane</button>
-    <button class="pattern-btn" data-pattern="switch">Switch</button>
-    <button class="pattern-btn" data-pattern="burst">Burst</button>
-    <button class="pattern-btn" data-pattern="random">Random</button>
-  </div>
+    <div class="code-panel" id="code-panel">
+      <div class="code-label">Access Code</div>
+      <input class="code-input" id="gate-code" maxlength="40" placeholder="• • • •" autocomplete="off" onkeydown="if(event.key==='Enter')tryEnter()">
+      <button class="enter-btn" onclick="tryEnter()">Enter Ritnome →</button>
+      <div class="err" id="gate-err"></div>
+    </div>
 
-  <button class="big-btn" id="introStartBtn">▶ START THE BEAT</button>
-  <div class="intro-info" id="introInfo">Fixed at <strong>100 BPM</strong> — the light moves every beat, whether you tap it or not. No miss penalty, just no hit counted. Score is how fast you land every hit.</div>
-
-  <input type="text" id="playerNameInputMain" class="name-input" maxlength="20" placeholder="Your name" autocomplete="off" style="max-width:420px;margin:16px auto 0">
-  <button class="box-open-btn" id="openBoxBtn">🏆 THE STANDINGS</button>
-
-  <div style="margin-top:24px;font-size:.68rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#4a5058">Powered by <a href="https://ritnome.com" target="_blank" rel="noopener" style="color:#8892a0;font-style:italic;text-decoration:underline">Gostar Digital</a></div>
-</div>
-
-<div id="screen-game">
-  <div class="topbar">
-    <div class="top-box"><div class="top-label">Hits</div><div class="top-val" id="hHits">0/10</div></div>
-    <div class="top-box info-box"><div class="top-label">Tempo</div><div class="top-val">100 BPM</div></div>
-    <div class="top-box"><div class="top-label">Pattern</div><div class="top-val" id="hPattern">Flow</div></div>
-    <div class="top-box"><div class="top-label">Best</div><div class="top-val" id="hBest">--</div></div>
-    <div class="top-box"><div class="top-label">Time</div><div class="top-val" id="hTime">0.0</div></div>
-  </div>
-  <div class="msg-bar watch" id="msg">TAP LET'S GO!</div>
-  <div class="court-area"><div class="court" id="court"></div></div>
-  <div class="bottombar">
-    <button class="bot-btn" id="menuBtn">← Home<span>Settings</span></button>
-    <button class="bot-btn" id="fsBtn">⛶ Full<span>Screen</span></button>
-    <button class="bot-btn start-btn" id="actBtn">LET'S GO</button>
-  </div>
-</div>
-
-<div id="screen-box">
-  <button class="box-back-btn" id="closeBoxBtn" style="margin-top:0;margin-bottom:20px">← Back</button>
-  <div class="box-title">THE <span>STANDINGS</span></div>
-  <div class="box-sub" id="boxSub">Flow · Fastest 10 Hits</div>
-  <div class="standings-tab-row" id="standingsTabRow"></div>
-  <div class="box-section">
-    <div class="box-section-label">Standings — Best Time Per Player</div>
-    <div id="standingsList"></div>
+    <div class="brandmark">Powered by <b>Gostar Digital</b></div>
   </div>
 </div>
 
 <script>
-(function(){
-var $=id=>document.getElementById(id);
+var $=function(id){return document.getElementById(id)};
 
 // ══════════════════════════════════════════════════════
-//  STANDINGS — its own dedicated table, entirely separate from
-//  every other game's board on the platform. Every genuinely
-//  completed run (reaching the target hit count) gets recorded —
-//  the pattern and target count both saved alongside the time,
-//  since a 10-hit Flow run and a 25-hit Burst run aren't
-//  comparable numbers at all.
+//  LICENSE SYSTEM — its own distinct session key
+//  ('ritnome-gate-pass') and its own distinct product scope
+//  ('ritnome') in the SAME Supabase licenses table every other
+//  product already uses. A code issued for any other product on
+//  this platform will NOT unlock this gate, and vice versa, even
+//  though all of them live in the same table. To issue / expire /
+//  revoke Ritnome licenses, admin.html needs a matching product
+//  tab for 'ritnome'.
 // ══════════════════════════════════════════════════════
-var SB_URL='https://sdaphocueugzfvjovuxd.supabase.co';
-var SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkYXBob2N1ZXVnemZ2am92dXhkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2MjQyMDgsImV4cCI6MjA5OTIwMDIwOH0.pDAzf4P6dD9eNEBlnP95SdF5BI-R84-Rdc0vKzYcn7M';
-var SB_TABLE='ritnome_standings';
-var currentPlayerName='';
-
-function recordScoreToStandings(name,pattern,timeSeconds){
-  return fetch(SB_URL+'/rest/v1/'+SB_TABLE,{
-    method:'POST',
-    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},
-    body:JSON.stringify({player_name:name,pattern:pattern,time_seconds:timeSeconds})
-  }).catch(function(){});
-}
-
-$('playerNameInputMain').addEventListener('keydown',function(e){
-  if(e.key==='Enter')$('introStartBtn').click();
-});
-
-var ROWS=4,COLS=8,TOTAL_CELLS=32;
-var VR_BPM=100;
-var currentPattern='flow';
-// Ritnome is now a fixed 10 hits, always — one comparable time per
-// pattern, not split across two different target counts.
-var currentTargetCount=10;
-
-var COLORS=['#00e5ff','#ff3b8d','#ffd23f','#3ddc72','#ff6b35','#a855f7'];
-// The same basketball-seam texture used across Reaction Velocity's
-// own targets — layered over the random color, so each lit cell
-// genuinely reads as a basketball, not just a colored square.
-var BALL_SEAMS="url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Cdefs%3E%3CclipPath%20id%3D%22c%22%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2249%22/%3E%3C/clipPath%3E%3C/defs%3E%3Cg%20clip-path%3D%22url%28%23c%29%22%20fill%3D%22none%22%20stroke%3D%22rgba%280%2C0%2C0%2C.4%29%22%20stroke-width%3D%223.4%22%3E%3Cline%20x1%3D%2250%22%20y1%3D%22-4%22%20x2%3D%2250%22%20y2%3D%22104%22/%3E%3Cpath%20d%3D%22M%20-4%2050%20Q%2050%20-4%20104%2050%22/%3E%3Cpath%20d%3D%22M%20-4%2050%20Q%2050%20104%20104%2050%22/%3E%3Cellipse%20cx%3D%2250%22%20cy%3D%2250%22%20rx%3D%2224%22%20ry%3D%2249%22/%3E%3C/g%3E%3C/svg%3E')";
-
-var PATTERN_LABELS={flow:'Flow',gonogo:'Go No Go',lane:'Lane',switch:'Switch',burst:'Burst',random:'Random'};
-
-var DEFAULT_INFO='Fixed at <strong>100 BPM</strong> — the light moves every beat, whether you tap it or not. No miss penalty, just no hit counted. Score is how fast you land every hit.';
-var GONOGO_INFO='Fixed at <strong>100 BPM</strong>. Tap only when it flashes <strong style="color:#ff1e3c">red</strong> — tap any other color and the round genuinely ends right there. This is the one mode with a real miss.';
-document.querySelectorAll('.pattern-btn').forEach(function(btn){
-  btn.onclick=function(){
-    currentPattern=btn.dataset.pattern;
-    document.querySelectorAll('.pattern-btn').forEach(function(b){b.classList.remove('active')});
-    btn.classList.add('active');
-    $('introInfo').innerHTML=currentPattern==='gonogo'?GONOGO_INFO:DEFAULT_INFO;
-  };
-});
-// ---- Audio: a synthesized dribble thump, not a sample. A low
-// sine sweep gives the thud its body; a short filtered noise burst
-// on top gives it the percussive slap of a ball meeting the floor.
-var audioCtx=null;
-function ensureAudio(){
-  if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();
-}
-function playThump(){
-  if(!audioCtx)return;
-  var now=audioCtx.currentTime;
-  var osc=audioCtx.createOscillator();
-  var oscGain=audioCtx.createGain();
-  osc.type='sine';
-  osc.frequency.setValueAtTime(130,now);
-  osc.frequency.exponentialRampToValueAtTime(46,now+0.1);
-  oscGain.gain.setValueAtTime(.001,now);
-  oscGain.gain.exponentialRampToValueAtTime(.85,now+0.006);
-  oscGain.gain.exponentialRampToValueAtTime(.001,now+0.16);
-  osc.connect(oscGain);oscGain.connect(audioCtx.destination);
-  osc.start(now);osc.stop(now+0.17);
-
-  var bufSize=Math.floor(audioCtx.sampleRate*0.035);
-  var buf=audioCtx.createBuffer(1,bufSize,audioCtx.sampleRate);
-  var data=buf.getChannelData(0);
-  for(var i=0;i<bufSize;i++){data[i]=(Math.random()*2-1)*(1-i/bufSize)}
-  var noise=audioCtx.createBufferSource();
-  noise.buffer=buf;
-  var noiseFilter=audioCtx.createBiquadFilter();
-  noiseFilter.type='lowpass';
-  noiseFilter.frequency.value=900;
-  var noiseGain=audioCtx.createGain();
-  noiseGain.gain.setValueAtTime(.22,now);
-  noiseGain.gain.exponentialRampToValueAtTime(.001,now+0.035);
-  noise.connect(noiseFilter);noiseFilter.connect(noiseGain);noiseGain.connect(audioCtx.destination);
-  noise.start(now);
-}
-
+var SUPABASE_URL = 'https://sdaphocueugzfvjovuxd.supabase.co';
+var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkYXBob2N1ZXVnemZ2am92dXhkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2MjQyMDgsImV4cCI6MjA5OTIwMDIwOH0.pDAzf4P6dD9eNEBlnP95SdF5BI-R84-Rdc0vKzYcn7M';
+var PRODUCT = 'ritnome';
 // ══════════════════════════════════════════════════════
-//  PATTERNS — the beat never waits. Every 100 BPM tick, the light
-//  advances to the next position in whichever pattern is selected,
-//  regardless of whether the player tapped the previous one in time.
-//  No miss penalty, just no hit counted — the score is purely how
-//  fast real hits stack up against a beat that never slows for you.
-// ══════════════════════════════════════════════════════
-function idxOf(row,col){return row*COLS+col}
 
-var flowRow=0,flowCol=-1;
-function nextFlow(){
-  flowCol++;
-  if(flowCol>=COLS){flowCol=0;flowRow=Math.floor(Math.random()*ROWS)}
-  return idxOf(flowRow,flowCol);
-}
+function tryEnter(){
+  var input = $('gate-code').value.trim();
+  if (!input){ return; }
+  $('gate-err').style.color = '';
+  $('gate-err').textContent = 'Checking…';
 
-// GO NO GO — Reactific's own core mechanic, brought into Ritnome.
-// The light still moves to a random cell every beat, like Random,
-// but now also cycles color — genuinely red only ~14%-30% of the
-// time, wandering each beat, matching Reactific's own established
-// rhythm exactly. Tap while it's red: a real hit. Tap on anything
-// else: the round genuinely ends right there — this is the one
-// pattern in Ritnome with a real, meaningful penalty for a wrong
-// tap, since restraint under pressure is the whole point of the
-// mechanic this mode is built from.
-var GO_COLOR='#ff1e3c';
-var NOGO_COLORS=['#00e5ff','#ffd23f','#3ddc72','#ff6b35','#a855f7','#c9c9d4'];
-var currentIsGo=false;
-function nextGoNoGo(){return Math.floor(Math.random()*TOTAL_CELLS)}
+  var url = SUPABASE_URL + '/rest/v1/licenses'
+    + '?select=code,expires_at,active,product,school_name'
+    + '&code=ilike.' + encodeURIComponent(input)
+    + '&active=eq.true'
+    + '&product=eq.' + PRODUCT;
 
-var laneCol=0,laneRow=-1;
-function nextLane(){
-  laneRow++;
-  if(laneRow>=ROWS){laneRow=0;laneCol=Math.floor(Math.random()*COLS)}
-  return idxOf(laneRow,laneCol);
-}
-
-var switchOnRight=false;
-function nextSwitch(){
-  switchOnRight=!switchOnRight;
-  var col=switchOnRight?(COLS/2)+Math.floor(Math.random()*(COLS/2)):Math.floor(Math.random()*(COLS/2));
-  var row=Math.floor(Math.random()*ROWS);
-  return idxOf(row,col);
-}
-
-var burstAtCenter=false;
-function nextBurst(){
-  burstAtCenter=!burstAtCenter;
-  if(burstAtCenter){
-    var col=(COLS/2)-1+Math.floor(Math.random()*2);
-    var row=1+Math.floor(Math.random()*2);
-    return idxOf(row,col);
-  }
-  var edge=Math.floor(Math.random()*4);
-  var r,c;
-  if(edge===0){r=0;c=Math.floor(Math.random()*COLS)}
-  else if(edge===1){r=ROWS-1;c=Math.floor(Math.random()*COLS)}
-  else if(edge===2){r=Math.floor(Math.random()*ROWS);c=0}
-  else{r=Math.floor(Math.random()*ROWS);c=COLS-1}
-  return idxOf(r,c);
-}
-
-function nextRandom(){return Math.floor(Math.random()*TOTAL_CELLS)}
-
-var PATTERNS={flow:nextFlow,gonogo:nextGoNoGo,lane:nextLane,switch:nextSwitch,burst:nextBurst,random:nextRandom};
-
-// ── Court ──
-var cells=[];
-function buildCourt(){
-  var court=$('court');court.innerHTML='';cells=[];
-  for(var i=0;i<TOTAL_CELLS;i++){
-    var c=document.createElement('div');
-    c.className='cell';
-    c.dataset.i=i;
-    c.addEventListener('pointerdown',(function(idx){return function(e){e.preventDefault();handleTap(idx)}})(i));
-    court.appendChild(c);
-    cells.push(c);
-  }
-}
-function litCell(idx,forceColor){
-  var cell=cells[idx];
-  var color=forceColor||COLORS[Math.floor(Math.random()*COLORS.length)];
-  cell.style.setProperty('--lit-color',color);
-  cell.style.background=BALL_SEAMS+', radial-gradient(circle at 35% 35%,'+color+','+color+'aa)';
-  cell.style.backgroundSize='100% 100%, 100% 100%';
-  cell.classList.remove('lit');
-  void cell.offsetWidth;
-  cell.classList.add('lit');
-}
-function clearCell(idx){
-  var cell=cells[idx];
-  cell.classList.remove('lit');
-  cell.style.background='';
-}
-function msg(txt,cls){var el=$('msg');el.textContent=txt;el.className='msg-bar '+(cls||'watch')}
-
-// ── Game state ──
-var phase='idle';
-var currentIdx=-1;
-var hits=0;
-var startTime=0;
-var timerRAF=null;
-var schedulerId=null;
-var nextBeatTime=0;
-var bestTime=null;
-
-function loadBest(){
-  try{
-    var v=localStorage.getItem('ritnome-best-'+currentPattern);
-    bestTime=v?parseFloat(v):null;
-  }catch(e){bestTime=null}
-  $('hBest').textContent=bestTime!==null?bestTime.toFixed(2)+'s':'--';
-}
-function saveBestIfBetter(t){
-  if(bestTime===null||t<bestTime){
-    bestTime=t;
-    try{localStorage.setItem('ritnome-best-'+currentPattern,String(t))}catch(e){}
-  }
-}
-
-function advance(){
-  if(currentIdx>=0)clearCell(currentIdx);
-  currentIdx=PATTERNS[currentPattern]();
-  if(currentPattern==='gonogo'){
-    // Red probability wanders ~14%-30% each beat, matching
-    // Reactific's own established rhythm exactly — no countable
-    // pattern to it.
-    var chance=0.14+Math.random()*0.16;
-    currentIsGo=Math.random()<chance;
-    litCell(currentIdx,currentIsGo?GO_COLOR:NOGO_COLORS[Math.floor(Math.random()*NOGO_COLORS.length)]);
-  }else{
-    currentIsGo=true;
-    litCell(currentIdx);
-  }
-  playThump();
-}
-
-function scheduleLoop(){
-  if(phase!=='tapping')return;
-  while(nextBeatTime<audioCtx.currentTime+0.12){
-    advance();
-    nextBeatTime+=60/VR_BPM;
-  }
-  schedulerId=setTimeout(scheduleLoop,25);
-}
-
-function updateTimerDisplay(){
-  if(phase!=='tapping')return;
-  var elapsed=(performance.now()-startTime)/1000;
-  $('hTime').textContent=elapsed.toFixed(1);
-  timerRAF=requestAnimationFrame(updateTimerDisplay);
-}
-
-function startRound(){
-  if(phase==='tapping')return;
-  ensureAudio();
-  if(audioCtx.state==='suspended')audioCtx.resume();
-
-  flowRow=Math.floor(Math.random()*ROWS);flowCol=-1;
-  laneCol=Math.floor(Math.random()*COLS);laneRow=-1;
-  switchOnRight=false;
-  burstAtCenter=false;
-  currentIsGo=false;
-
-  phase='tapping';
-  currentIdx=-1;
-  hits=0;
-  $('hHits').textContent='0/'+currentTargetCount;
-  $('hTime').textContent='0.0';
-  $('hPattern').textContent=PATTERN_LABELS[currentPattern];
-  msg('⚡ GO! TAP THE BALL','go');
-  $('actBtn').disabled=true;
-
-  startTime=performance.now();
-  nextBeatTime=audioCtx.currentTime+0.05;
-  scheduleLoop();
-  timerRAF=requestAnimationFrame(updateTimerDisplay);
-}
-
-function stopRound(){
-  phase='idle';
-  if(schedulerId)clearTimeout(schedulerId);
-  if(timerRAF)cancelAnimationFrame(timerRAF);
-  if(currentIdx>=0)clearCell(currentIdx);
-  currentIdx=-1;
-}
-
-function handleTap(idx){
-  if(phase!=='tapping'||idx!==currentIdx)return;
-  if(currentPattern==='gonogo'&&!currentIsGo){
-    // A real miss, genuinely — the round ends here, matching the
-    // established "a miss ends the round" convention from the rest
-    // of the platform, since restraint under pressure is the whole
-    // point of this specific mode.
-    stopRound();
-    msg('✗ NOT RED — MISSED','miss');
-    $('actBtn').textContent='TRY AGAIN';
-    $('actBtn').disabled=false;
-    return;
-  }
-  hits++;
-  $('hHits').textContent=hits+'/'+currentTargetCount;
-  if(hits>=currentTargetCount){
-    var finalTime=(performance.now()-startTime)/1000;
-    stopRound();
-    var isNewBest=bestTime===null||finalTime<bestTime;
-    saveBestIfBetter(finalTime);
-    loadBest();
-    recordScoreToStandings(currentPlayerName,currentPattern,finalTime);
-    msg((isNewBest?'🏆 NEW BEST — ':'✅ DONE — ')+finalTime.toFixed(2)+'s','perfect');
-    $('actBtn').textContent='PLAY AGAIN';
-    $('actBtn').disabled=false;
-  }
-}
-
-// Keeps the court at a true 2:1 ratio (matching the drawn court
-// background exactly), fitting the largest size that stays inside
-// the available area — without this, width:100%/height:100% just
-// stretches to whatever shape the remaining screen space happens to
-// be, distorting the court away from a real basketball court's own
-// actual proportions.
-function resizeCourtToFit(){
-  var area=document.querySelector('.court-area');
-  var court=$('court');
-  if(!area||!court)return;
-  var areaW=area.clientWidth;
-  var areaH=area.clientHeight;
-  if(!areaW||!areaH)return;
-  var targetW=areaW;
-  var targetH=targetW/2;
-  if(targetH>areaH){
-    targetH=areaH;
-    targetW=targetH*2;
-  }
-  court.style.width=targetW+'px';
-  court.style.height=targetH+'px';
-}
-window.addEventListener('resize',resizeCourtToFit);
-
-function launchGame(nm){
-  currentPlayerName=nm.slice(0,20);
-  $('screen-intro').style.display='none';$('screen-game').style.display='flex';
-  buildCourt();
-  resizeCourtToFit();
-  loadBest();
-  msg("TAP LET'S GO!",'watch');
-  try{ if(!document.fullscreenElement && document.documentElement.requestFullscreen){ document.documentElement.requestFullscreen().catch(function(){}); } }catch(e){}
-}
-
-// ══════════════════════════════════════════════════════
-//  STANDINGS DISPLAY — one shared table, filtered by pattern per
-//  tab, sorted by time ascending since faster is better here (the
-//  reverse of every score-based board elsewhere on the platform).
-// ══════════════════════════════════════════════════════
-var STANDINGS_PATTERNS=[
-  {key:'flow',label:'Flow'},
-  {key:'gonogo',label:'Go No Go'},
-  {key:'lane',label:'Lane'},
-  {key:'switch',label:'Switch'},
-  {key:'burst',label:'Burst'},
-  {key:'random',label:'Random'}
-];
-var currentStandingsPattern='flow';
-
-function fetchStandingsFor(patternKey){
-  var url=SB_URL+'/rest/v1/'+SB_TABLE+'?select=player_name,time_seconds&order=time_seconds.asc&pattern=eq.'+encodeURIComponent(patternKey);
-  return fetch(url,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}})
-    .then(function(r){if(!r.ok)throw new Error('bad response');return r.json()})
-    .then(function(rows){
-      var best={};
-      (rows||[]).forEach(function(r){
-        var existing=best[r.player_name];
-        if(!existing||r.time_seconds<existing.time){
-          best[r.player_name]={name:r.player_name,time:r.time_seconds};
-        }
-      });
-      return Object.keys(best).map(function(n){return best[n]}).sort(function(a,b){return a.time-b.time});
-    });
-}
-
-function renderStandingsTabs(){
-  var row=$('standingsTabRow');
-  row.innerHTML=STANDINGS_PATTERNS.map(function(p){
-    return '<button class="standings-tab'+(p.key===currentStandingsPattern?' active':'')+'" data-key="'+p.key+'">'+p.label+'</button>';
-  }).join('');
-  row.querySelectorAll('.standings-tab').forEach(function(btn){
-    btn.addEventListener('click',function(){renderStandingsForPattern(btn.dataset.key)});
-  });
-}
-
-function renderStandingsForPattern(patternKey){
-  currentStandingsPattern=patternKey;
-  var patternConfig=STANDINGS_PATTERNS.filter(function(p){return p.key===patternKey})[0];
-  renderStandingsTabs();
-  $('boxSub').textContent=patternConfig.label+' · Fastest 10 Hits';
-  var listEl=$('standingsList');
-  listEl.innerHTML='<div class="box-empty">Loading standings…</div>';
-
-  fetchStandingsFor(patternKey).then(function(ranked){
-    if(!ranked.length){
-      listEl.innerHTML='<div class="box-empty">No players yet — be the first name on the board.</div>';
-      return;
+  fetch(url, {
+    headers: {
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
     }
-    listEl.innerHTML=ranked.map(function(p,i){
-      var rankClass=i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'';
-      var safeName=p.name.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-      return '<div class="standings-row '+rankClass+'">'
-        +'<span class="standings-rank">'+(i+1)+'</span>'
-        +'<span class="standings-name">'+safeName+'</span>'
-        +'<span class="standings-pts">'+p.time.toFixed(2)+'s</span>'
-        +'</div>';
-    }).join('');
-  }).catch(function(){
-    listEl.innerHTML='<div class="box-empty">Could not load standings right now — try again in a moment.</div>';
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(rows){
+    var lic = (rows && rows.length) ? rows[0] : null;
+
+    if (!lic){ return reject('Invalid code — check with your administrator'); }
+
+    if (lic.expires_at){
+      var exp = new Date(lic.expires_at + 'T23:59:59');
+      if (new Date() > exp){ return reject('This license has expired'); }
+    }
+
+    sessionStorage.setItem('ritnome-gate-pass','1');
+    sessionStorage.setItem('ritnome-license', input.toUpperCase());
+    sessionStorage.setItem('ritnome-school', lic.school_name || '');
+    window.location.href = 'ritnome.html';
+  })
+  .catch(function(){
+    reject('Connection problem — please try again');
   });
 }
 
-function openStandings(){
-  $('screen-intro').style.display='none';
-  $('screen-game').style.display='none';
-  $('screen-box').style.display='flex';
-  renderStandingsForPattern(currentStandingsPattern);
+function reject(msg){
+  $('gate-err').style.color = '#ff8888';
+  $('gate-err').textContent = msg;
+  var box = $('gate-code');
+  box.classList.remove('shake'); void box.offsetWidth; box.classList.add('shake');
+  box.value=''; box.focus();
 }
-$('openBoxBtn').addEventListener('click',openStandings);
-$('closeBoxBtn').addEventListener('click',function(){
-  $('screen-box').style.display='none';
-  $('screen-intro').style.display='flex';
-});
-
-$('introStartBtn').onclick=function(){
-  var nameField=$('playerNameInputMain');
-  var nm=nameField.value.trim();
-  if(!nm){
-    nameField.focus();
-    nameField.style.borderColor='#FF1493';
-    setTimeout(function(){nameField.style.borderColor=''},600);
-    return;
-  }
-  launchGame(nm);
-};
-$('actBtn').onclick=function(){startRound()};
-$('introBackBtn').onclick=function(){window.location.href='index.html'};
-$('menuBtn').onclick=function(){stopRound();window.location.href='index.html'};
-var fsBtn=$('fsBtn');
-if(fsBtn)fsBtn.onclick=async function(){try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen()}catch(e){}};
-})();
 </script>
 </body>
 </html>
