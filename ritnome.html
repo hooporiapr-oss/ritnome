@@ -46,6 +46,7 @@ html,body{width:100%;height:100%;background:#000;font-family:Arial,sans-serif;co
 .box-empty{color:#7fa8c0;font-size:.85rem;padding:24px 8px;font-style:italic;text-align:center}
 .box-back-btn{width:100%;max-width:440px;height:56px;border:none;border-radius:16px;background:linear-gradient(135deg,#00e5ff,#0091ff);color:#031018;font-size:1rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;box-shadow:0 0 30px rgba(0,229,255,.6);margin-top:6px}
 .standings-row{font-size:.8rem;color:#9fb3c8;padding:0;border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer}
+.standings-row.standings-row-flat{cursor:default}
 .standings-row-main{display:flex;align-items:center;gap:12px;padding:10px}
 .standings-rank{font-weight:900;font-size:1.05rem;color:#00e5ff;min-width:28px}
 .standings-row.rank-1 .standings-rank{color:#ffd35a}
@@ -631,20 +632,23 @@ function renderStandingsForPattern(patternKey){
       var rankClass=i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'';
       var safeName=p.name.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
       var flashesDisplay=(p.flashes===null||p.flashes===undefined)?'--':p.flashes;
-      var mainScore,detailHtml;
+      var mainScore;
       if(isGoNoGo){
         mainScore=(p.hitsScored===null||p.hitsScored===undefined?'--':p.hitsScored)+'/25';
-        var timeDisplay=(p.time===null||p.time===undefined)?'--':p.time.toFixed(2)+'s';
-        detailHtml='<div class="sd-cell"><div class="sd-label">Total Flashes</div><div class="sd-val">'+flashesDisplay+'</div></div>'
-          +'<div class="sd-cell"><div class="sd-label">Time Taken</div><div class="sd-val">'+timeDisplay+'</div></div>';
-      }else{
-        // Hit rate — the 25 completed hits against the total
-        // flashes it actually took to land them.
-        var hitRate=p.flashes?((currentTargetCount/p.flashes)*100).toFixed(1):null;
-        mainScore=p.time.toFixed(2)+'s';
-        detailHtml='<div class="sd-cell"><div class="sd-label">Total Flashes</div><div class="sd-val">'+flashesDisplay+'</div></div>'
-          +'<div class="sd-cell"><div class="sd-label">Hit Rate</div><div class="sd-val">'+(hitRate!==null?hitRate+'%':'--')+'</div></div>';
+        return '<div class="standings-row standings-row-flat '+rankClass+'">'
+          +'<div class="standings-row-main">'
+            +'<span class="standings-rank">'+(i+1)+'</span>'
+            +'<span class="standings-name">'+safeName+'</span>'
+            +'<span class="standings-pts">'+mainScore+'</span>'
+          +'</div>'
+          +'</div>';
       }
+      // Hit rate — the 25 completed hits against the total
+      // flashes it actually took to land them.
+      var hitRate=p.flashes?((currentTargetCount/p.flashes)*100).toFixed(1):null;
+      mainScore=p.time.toFixed(2)+'s';
+      var detailHtml='<div class="sd-cell"><div class="sd-label">Total Flashes</div><div class="sd-val">'+flashesDisplay+'</div></div>'
+        +'<div class="sd-cell"><div class="sd-label">Hit Rate</div><div class="sd-val">'+(hitRate!==null?hitRate+'%':'--')+'</div></div>';
       return '<div class="standings-row '+rankClass+'">'
         +'<div class="standings-row-main">'
           +'<span class="standings-rank">'+(i+1)+'</span>'
@@ -660,12 +664,15 @@ function renderStandingsForPattern(patternKey){
     // Each row toggles its own detail open/closed — one player's
     // breakdown expanding shouldn't affect any other row on the
     // board, matching the same per-row toggle pattern used
-    // elsewhere on the platform.
-    listEl.querySelectorAll('.standings-row').forEach(function(row){
-      row.addEventListener('click',function(){
-        row.classList.toggle('open');
+    // elsewhere on the platform. Go No Go's own rows have no detail
+    // to expand at all, so they're skipped here entirely.
+    if(!isGoNoGo){
+      listEl.querySelectorAll('.standings-row').forEach(function(row){
+        row.addEventListener('click',function(){
+          row.classList.toggle('open');
+        });
       });
-    });
+    }
   }).catch(function(){
     listEl.innerHTML='<div class="box-empty">Could not load standings right now — try again in a moment.</div>';
   });
