@@ -191,10 +191,11 @@ $('playerNameInputMain').addEventListener('keydown',function(e){
 });
 
 var ROWS=4,COLS=8,TOTAL_CELLS=32;
-// Fixed per pattern — 100 BPM for every pattern except Go No Go,
-// which runs slower at 80 BPM to give the wandering red probability
-// enough room to actually read as a real reaction test, not a blur.
-function getCurrentBPM(){return currentPattern==='gonogo'?80:100}
+// Fixed per pattern — 100 BPM for Flow, Lane, Switch, and Burst;
+// 80 BPM for Go No Go and Reaction Speed, both of which need a
+// little more room to actually read as a real reaction test rather
+// than a blur.
+function getCurrentBPM(){return(currentPattern==='gonogo'||currentPattern==='random')?80:100}
 var currentPattern='flow';
 // Ritnome is now a fixed 25 hits, always — one comparable time per
 // pattern, not split across two different target counts.
@@ -218,12 +219,13 @@ var PATTERN_LABELS={flow:'Flow',gonogo:'Go No Go',lane:'Lane',switch:'Switch',bu
 
 var DEFAULT_INFO='Fixed at <strong>100 BPM</strong> — the light moves every beat, whether you tap it or not. No miss penalty, just no hit counted. Score is how fast you land every hit.';
 var GONOGO_INFO='Fixed at <strong>80 BPM</strong>. Tap only when it flashes <strong style="color:#ff6b35">orange</strong> — the round runs until <strong>25 total oranges</strong> have flashed. Score is how many of those 25 you actually hit.';
+var REACTION_SPEED_INFO='Fixed at <strong>80 BPM</strong>. Race to <strong>25 hits</strong> — reach it and the round ends right there. Miss too many, and it runs up to <strong>100 flashes</strong> total. Score is hits out of whichever you actually hit.';
 document.querySelectorAll('.pattern-btn').forEach(function(btn){
   btn.onclick=function(){
     currentPattern=btn.dataset.pattern;
     document.querySelectorAll('.pattern-btn').forEach(function(b){b.classList.remove('active')});
     btn.classList.add('active');
-    $('introInfo').innerHTML=currentPattern==='gonogo'?GONOGO_INFO:DEFAULT_INFO;
+    $('introInfo').innerHTML=currentPattern==='gonogo'?GONOGO_INFO:currentPattern==='random'?REACTION_SPEED_INFO:DEFAULT_INFO;
   };
 });
 // ---- Audio: a synthesized dribble thump, not a sample. A low
@@ -555,7 +557,12 @@ function finishReactionSpeedRound(reachedTarget){
   recordScoreToStandings(currentPlayerName,currentPattern,finalTime,totalFlashes,hits);
   // The denominator reflects how the round actually ended — the
   // real 25-hit target if reached, or the 100-flash cap if not.
+  // The HUD's own hits box only ever gets set by handleTap(), which
+  // always writes against the fixed 25 — so without this, it would
+  // stay stuck showing the wrong denominator once the round ends
+  // via the 100-flash cap instead of a tap.
   var denom=reachedTarget?25:100;
+  $('hHits').textContent=hits+'/'+denom;
   msg((reachedTarget?'🏆 25/25 — ':'✅ DONE — ')+hits+'/'+denom+' HITS','perfect');
   $('actBtn').textContent='PLAY AGAIN';
   $('actBtn').disabled=false;
