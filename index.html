@@ -26,11 +26,30 @@ html,body{width:100%;height:100%;background:#000;font-family:Arial,sans-serif;co
 .pattern-btn{width:100%;min-width:0;height:58px;border:3px solid rgba(0,229,255,.4);background:rgba(0,229,255,.08);border-radius:14px;color:#fff;font-size:.9rem;font-weight:900;cursor:pointer;text-transform:uppercase;letter-spacing:.04em;padding:4px 2px}
 .pattern-btn.active{border-color:#00e5ff;background:rgba(0,229,255,.22);box-shadow:0 0 30px rgba(0,229,255,.6);color:#00e5ff}
 .pattern-btn small{display:block;font-size:.58rem;color:#a7adba;letter-spacing:.02em;white-space:normal;line-height:1.2}
-.count-row{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px;width:100%;max-width:420px}
-.count-btn{width:100%;min-width:0;height:50px;border:3px solid rgba(0,229,255,.4);background:rgba(0,229,255,.08);border-radius:12px;color:#fff;font-size:.9rem;font-weight:900;cursor:pointer;text-transform:uppercase;letter-spacing:.02em}
-.count-btn.active{border-color:#00e5ff;background:rgba(0,229,255,.22);box-shadow:0 0 24px rgba(0,229,255,.6);color:#00e5ff}
 .intro-info{font-size:.75rem;color:#8892a0;letter-spacing:.1em;text-transform:uppercase;text-align:center;line-height:1.8;width:100%;max-width:420px}
 .intro-info strong{color:#ffd35a}
+.name-input{width:100%;max-width:420px;padding:14px;border-radius:14px;border:2px solid rgba(0,229,255,.4);background:rgba(255,255,255,.05);color:#fff;font-family:Arial,sans-serif;font-size:1rem;text-align:center}
+.name-input:focus{outline:none;border-color:#00e5ff;box-shadow:0 0 20px rgba(0,229,255,.3)}
+.box-open-btn{width:100%;max-width:420px;height:52px;border:2px solid rgba(0,229,255,.5);background:rgba(0,229,255,.1);border-radius:14px;color:#00e5ff;font-size:.9rem;font-weight:900;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;margin-top:6px}
+
+#screen-box{position:fixed;inset:0;z-index:58;display:none;flex-direction:column;align-items:center;justify-content:flex-start;background:radial-gradient(ellipse at center,#001018 0%,#000 70%);padding:24px;overflow-y:auto}
+.box-title{font-size:1.7rem;font-weight:900;font-style:italic;letter-spacing:.06em;text-transform:uppercase;color:#fff;text-shadow:0 0 40px rgba(0,229,255,.8);margin-bottom:2px}
+.box-title span{color:#00e5ff}
+.box-sub{font-size:.65rem;letter-spacing:.24em;text-transform:uppercase;color:#00e5ff;margin-bottom:22px}
+.box-section{width:100%;max-width:600px;margin-bottom:24px}
+.box-section-label{font-size:.65rem;font-weight:900;letter-spacing:.18em;text-transform:uppercase;color:#ffd35a;margin-bottom:8px;text-align:left;padding-left:4px}
+.box-empty{color:#7fa8c0;font-size:.85rem;padding:24px 8px;font-style:italic;text-align:center}
+.box-back-btn{width:100%;max-width:440px;height:56px;border:none;border-radius:16px;background:linear-gradient(135deg,#00e5ff,#0091ff);color:#031018;font-size:1rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;box-shadow:0 0 30px rgba(0,229,255,.6);margin-top:6px}
+.standings-row{font-size:.8rem;color:#9fb3c8;padding:10px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:12px}
+.standings-rank{font-weight:900;font-size:1.05rem;color:#00e5ff;min-width:28px}
+.standings-row.rank-1 .standings-rank{color:#ffd35a}
+.standings-row.rank-2 .standings-rank{color:#c4b5fd}
+.standings-row.rank-3 .standings-rank{color:#fb923c}
+.standings-name{flex:1;color:#fff;font-weight:700;text-align:left}
+.standings-pts{color:#00e5ff;font-weight:900;font-size:1rem}
+.standings-tab-row{display:flex;gap:6px;width:100%;max-width:600px;margin-bottom:16px;flex-wrap:wrap;justify-content:center}
+.standings-tab{padding:8px 14px;border-radius:999px;border:1.5px solid rgba(255,255,255,.15);background:rgba(255,255,255,.04);color:#9fb3c8;font-size:.68rem;font-weight:900;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;white-space:nowrap}
+.standings-tab.active{border-color:#00e5ff;color:#00e5ff;background:rgba(0,229,255,.1)}
 
 @media (max-width:420px){
   #screen-intro{padding:16px 12px 20px}
@@ -89,13 +108,12 @@ html,body{width:100%;height:100%;background:#000;font-family:Arial,sans-serif;co
     <button class="pattern-btn" data-pattern="burst">Burst</button>
     <button class="pattern-btn" data-pattern="random">Random</button>
   </div>
-  <div class="count-row">
-    <button class="count-btn active" data-count="10">10 Hits</button>
-    <button class="count-btn" data-count="25">25 Hits</button>
-  </div>
 
   <button class="big-btn" id="introStartBtn">▶ START THE BEAT</button>
   <div class="intro-info" id="introInfo">Fixed at <strong>100 BPM</strong> — the light moves every beat, whether you tap it or not. No miss penalty, just no hit counted. Score is how fast you land every hit.</div>
+
+  <input type="text" id="playerNameInputMain" class="name-input" maxlength="20" placeholder="Your name" autocomplete="off" style="max-width:420px;margin:16px auto 0">
+  <button class="box-open-btn" id="openBoxBtn">🏆 THE STANDINGS</button>
 
   <div style="margin-top:24px;font-size:.68rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#4a5058">Powered by <a href="https://ritnome.com" target="_blank" rel="noopener" style="color:#8892a0;font-style:italic;text-decoration:underline">Gostar Digital</a></div>
 </div>
@@ -117,13 +135,51 @@ html,body{width:100%;height:100%;background:#000;font-family:Arial,sans-serif;co
   </div>
 </div>
 
+<div id="screen-box">
+  <button class="box-back-btn" id="closeBoxBtn" style="margin-top:0;margin-bottom:20px">← Back</button>
+  <div class="box-title">THE <span>STANDINGS</span></div>
+  <div class="box-sub" id="boxSub">Flow · Fastest 10 Hits</div>
+  <div class="standings-tab-row" id="standingsTabRow"></div>
+  <div class="box-section">
+    <div class="box-section-label">Standings — Best Time Per Player</div>
+    <div id="standingsList"></div>
+  </div>
+</div>
+
 <script>
 (function(){
 var $=id=>document.getElementById(id);
 
+// ══════════════════════════════════════════════════════
+//  STANDINGS — its own dedicated table, entirely separate from
+//  every other game's board on the platform. Every genuinely
+//  completed run (reaching the target hit count) gets recorded —
+//  the pattern and target count both saved alongside the time,
+//  since a 10-hit Flow run and a 25-hit Burst run aren't
+//  comparable numbers at all.
+// ══════════════════════════════════════════════════════
+var SB_URL='https://sdaphocueugzfvjovuxd.supabase.co';
+var SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkYXBob2N1ZXVnemZ2am92dXhkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2MjQyMDgsImV4cCI6MjA5OTIwMDIwOH0.pDAzf4P6dD9eNEBlnP95SdF5BI-R84-Rdc0vKzYcn7M';
+var SB_TABLE='ritnome_standings';
+var currentPlayerName='';
+
+function recordScoreToStandings(name,pattern,timeSeconds){
+  return fetch(SB_URL+'/rest/v1/'+SB_TABLE,{
+    method:'POST',
+    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},
+    body:JSON.stringify({player_name:name,pattern:pattern,time_seconds:timeSeconds})
+  }).catch(function(){});
+}
+
+$('playerNameInputMain').addEventListener('keydown',function(e){
+  if(e.key==='Enter')$('introStartBtn').click();
+});
+
 var ROWS=4,COLS=8,TOTAL_CELLS=32;
 var VR_BPM=100;
 var currentPattern='flow';
+// Ritnome is now a fixed 10 hits, always — one comparable time per
+// pattern, not split across two different target counts.
 var currentTargetCount=10;
 
 var COLORS=['#00e5ff','#ff3b8d','#ffd23f','#3ddc72','#ff6b35','#a855f7'];
@@ -144,14 +200,6 @@ document.querySelectorAll('.pattern-btn').forEach(function(btn){
     $('introInfo').innerHTML=currentPattern==='gonogo'?GONOGO_INFO:DEFAULT_INFO;
   };
 });
-document.querySelectorAll('.count-btn').forEach(function(btn){
-  btn.onclick=function(){
-    currentTargetCount=Number(btn.dataset.count);
-    document.querySelectorAll('.count-btn').forEach(function(b){b.classList.remove('active')});
-    btn.classList.add('active');
-  };
-});
-
 // ---- Audio: a synthesized dribble thump, not a sample. A low
 // sine sweep gives the thud its body; a short filtered noise burst
 // on top gives it the percussive slap of a ball meeting the floor.
@@ -297,7 +345,7 @@ var bestTime=null;
 
 function loadBest(){
   try{
-    var v=localStorage.getItem('ritnome-best-'+currentPattern+'-'+currentTargetCount);
+    var v=localStorage.getItem('ritnome-best-'+currentPattern);
     bestTime=v?parseFloat(v):null;
   }catch(e){bestTime=null}
   $('hBest').textContent=bestTime!==null?bestTime.toFixed(2)+'s':'--';
@@ -305,7 +353,7 @@ function loadBest(){
 function saveBestIfBetter(t){
   if(bestTime===null||t<bestTime){
     bestTime=t;
-    try{localStorage.setItem('ritnome-best-'+currentPattern+'-'+currentTargetCount,String(t))}catch(e){}
+    try{localStorage.setItem('ritnome-best-'+currentPattern,String(t))}catch(e){}
   }
 }
 
@@ -397,6 +445,7 @@ function handleTap(idx){
     var isNewBest=bestTime===null||finalTime<bestTime;
     saveBestIfBetter(finalTime);
     loadBest();
+    recordScoreToStandings(currentPlayerName,currentPattern,finalTime);
     msg((isNewBest?'🏆 NEW BEST — ':'✅ DONE — ')+finalTime.toFixed(2)+'s','perfect');
     $('actBtn').textContent='PLAY AGAIN';
     $('actBtn').disabled=false;
@@ -427,7 +476,8 @@ function resizeCourtToFit(){
 }
 window.addEventListener('resize',resizeCourtToFit);
 
-function launchGame(){
+function launchGame(nm){
+  currentPlayerName=nm.slice(0,20);
   $('screen-intro').style.display='none';$('screen-game').style.display='flex';
   buildCourt();
   resizeCourtToFit();
@@ -436,7 +486,97 @@ function launchGame(){
   try{ if(!document.fullscreenElement && document.documentElement.requestFullscreen){ document.documentElement.requestFullscreen().catch(function(){}); } }catch(e){}
 }
 
-$('introStartBtn').onclick=function(){launchGame()};
+// ══════════════════════════════════════════════════════
+//  STANDINGS DISPLAY — one shared table, filtered by pattern per
+//  tab, sorted by time ascending since faster is better here (the
+//  reverse of every score-based board elsewhere on the platform).
+// ══════════════════════════════════════════════════════
+var STANDINGS_PATTERNS=[
+  {key:'flow',label:'Flow'},
+  {key:'gonogo',label:'Go No Go'},
+  {key:'lane',label:'Lane'},
+  {key:'switch',label:'Switch'},
+  {key:'burst',label:'Burst'},
+  {key:'random',label:'Random'}
+];
+var currentStandingsPattern='flow';
+
+function fetchStandingsFor(patternKey){
+  var url=SB_URL+'/rest/v1/'+SB_TABLE+'?select=player_name,time_seconds&order=time_seconds.asc&pattern=eq.'+encodeURIComponent(patternKey);
+  return fetch(url,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}})
+    .then(function(r){if(!r.ok)throw new Error('bad response');return r.json()})
+    .then(function(rows){
+      var best={};
+      (rows||[]).forEach(function(r){
+        var existing=best[r.player_name];
+        if(!existing||r.time_seconds<existing.time){
+          best[r.player_name]={name:r.player_name,time:r.time_seconds};
+        }
+      });
+      return Object.keys(best).map(function(n){return best[n]}).sort(function(a,b){return a.time-b.time});
+    });
+}
+
+function renderStandingsTabs(){
+  var row=$('standingsTabRow');
+  row.innerHTML=STANDINGS_PATTERNS.map(function(p){
+    return '<button class="standings-tab'+(p.key===currentStandingsPattern?' active':'')+'" data-key="'+p.key+'">'+p.label+'</button>';
+  }).join('');
+  row.querySelectorAll('.standings-tab').forEach(function(btn){
+    btn.addEventListener('click',function(){renderStandingsForPattern(btn.dataset.key)});
+  });
+}
+
+function renderStandingsForPattern(patternKey){
+  currentStandingsPattern=patternKey;
+  var patternConfig=STANDINGS_PATTERNS.filter(function(p){return p.key===patternKey})[0];
+  renderStandingsTabs();
+  $('boxSub').textContent=patternConfig.label+' · Fastest 10 Hits';
+  var listEl=$('standingsList');
+  listEl.innerHTML='<div class="box-empty">Loading standings…</div>';
+
+  fetchStandingsFor(patternKey).then(function(ranked){
+    if(!ranked.length){
+      listEl.innerHTML='<div class="box-empty">No players yet — be the first name on the board.</div>';
+      return;
+    }
+    listEl.innerHTML=ranked.map(function(p,i){
+      var rankClass=i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'';
+      var safeName=p.name.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      return '<div class="standings-row '+rankClass+'">'
+        +'<span class="standings-rank">'+(i+1)+'</span>'
+        +'<span class="standings-name">'+safeName+'</span>'
+        +'<span class="standings-pts">'+p.time.toFixed(2)+'s</span>'
+        +'</div>';
+    }).join('');
+  }).catch(function(){
+    listEl.innerHTML='<div class="box-empty">Could not load standings right now — try again in a moment.</div>';
+  });
+}
+
+function openStandings(){
+  $('screen-intro').style.display='none';
+  $('screen-game').style.display='none';
+  $('screen-box').style.display='flex';
+  renderStandingsForPattern(currentStandingsPattern);
+}
+$('openBoxBtn').addEventListener('click',openStandings);
+$('closeBoxBtn').addEventListener('click',function(){
+  $('screen-box').style.display='none';
+  $('screen-intro').style.display='flex';
+});
+
+$('introStartBtn').onclick=function(){
+  var nameField=$('playerNameInputMain');
+  var nm=nameField.value.trim();
+  if(!nm){
+    nameField.focus();
+    nameField.style.borderColor='#FF1493';
+    setTimeout(function(){nameField.style.borderColor=''},600);
+    return;
+  }
+  launchGame(nm);
+};
 $('actBtn').onclick=function(){startRound()};
 $('introBackBtn').onclick=function(){window.location.href='index.html'};
 $('menuBtn').onclick=function(){stopRound();window.location.href='index.html'};
