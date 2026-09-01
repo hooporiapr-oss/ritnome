@@ -125,7 +125,7 @@ html,body{width:100%;height:100%;background:#000;font-family:Arial,sans-serif;co
 
 <div id="screen-game">
   <div class="topbar">
-    <div class="top-box"><div class="top-label">Hits</div><div class="top-val" id="hHits">0/10</div></div>
+    <div class="top-box"><div class="top-label">Hits</div><div class="top-val" id="hHits">0/25</div></div>
     <div class="top-box info-box"><div class="top-label">Tempo</div><div class="top-val">100 BPM</div></div>
     <div class="top-box"><div class="top-label">Pattern</div><div class="top-val" id="hPattern">Flow</div></div>
     <div class="top-box"><div class="top-label">Best</div><div class="top-val" id="hBest">--</div></div>
@@ -183,9 +183,9 @@ $('playerNameInputMain').addEventListener('keydown',function(e){
 var ROWS=4,COLS=8,TOTAL_CELLS=32;
 var VR_BPM=100;
 var currentPattern='flow';
-// Ritnome is now a fixed 10 hits, always — one comparable time per
+// Ritnome is now a fixed 25 hits, always — one comparable time per
 // pattern, not split across two different target counts.
-var currentTargetCount=10;
+var currentTargetCount=25;
 
 var COLORS=['#00e5ff','#ff3b8d','#ffd23f','#3ddc72','#ff6b35','#a855f7'];
 // The same basketball-seam texture used across Reaction Velocity's
@@ -587,8 +587,8 @@ $('introStartBtn').onclick=function(){
   launchGame(nm);
 };
 $('actBtn').onclick=function(){startRound()};
-$('introBackBtn').onclick=function(){window.location.href='index.html'};
-$('menuBtn').onclick=function(){stopRound();window.location.href='index.html'};
+$('introBackBtn').onclick=function(){window.location.href='ritnome.html'};
+$('menuBtn').onclick=function(){stopRound();window.location.href='ritnome.html'};
 var fsBtn=$('fsBtn');
 if(fsBtn)fsBtn.onclick=async function(){try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen()}catch(e){}};
 })();
