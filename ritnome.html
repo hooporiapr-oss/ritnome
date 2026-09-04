@@ -2,7 +2,11 @@
 <html lang="en">
 <head>
 <script>
-if (sessionStorage.getItem('ritnome-gate-pass') !== '1') {
+// Accepts either pass — the regular gameplay pass, or the separate
+// standings-only pass. Which one a visitor actually has gets
+// checked further down, once the page's own JS decides whether to
+// show the real intro screen or land them straight on standings.
+if (sessionStorage.getItem('ritnome-gate-pass') !== '1' && sessionStorage.getItem('ritnome-standings-gate-pass') !== '1') {
   window.location.replace('ritnome-index.html');
 }
 </script>
@@ -637,13 +641,49 @@ function openStandings(){
   $('screen-box').style.display='flex';
   renderStandingsForPattern(currentPattern);
 }
-$('openBoxBtn').addEventListener('click',openStandings);
+// A regular, gameplay-licensed player never gets a direct path into
+// standings at all — the two codes are genuinely, fully separate, so
+// even a player already inside the game gets sent to the standings
+// gate to prove they hold that code too, not just waved through on
+// their gameplay license. If they already hold the standings pass
+// from earlier in this session, the gate's own "already passed"
+// check sends them straight back here instantly, landing them on
+// standings via the standingsOnly path below — no redundant re-entry.
+$('openBoxBtn').addEventListener('click',function(){
+  window.location.href='ritnome-standings-gate.html';
+});
+
+// A visitor holding only the standings-only pass (not the regular
+// gameplay pass) never gets the real intro screen at all — this
+// code was issued specifically to view the board, not to play, so
+// they land straight on standings and "← Back" signs them out of
+// this session entirely rather than returning them to a real,
+// playable intro screen they were never actually licensed for.
+//
+// Detected via the gate's own explicit ?view=standings signal on
+// its redirect, not by inferring it from the absence of the
+// gameplay pass — a visitor who genuinely holds both codes (a coach
+// with their own demo access, say) still needs to correctly reach
+// standings when that's what they actually asked for, not get stuck
+// re-landing on the intro screen because the gameplay pass also
+// happens to be present.
+var standingsOnly = new URLSearchParams(window.location.search).get('view') === 'standings';
+if (standingsOnly) {
+  openStandings();
+}
+
 $('closeBoxBtn').addEventListener('click',function(){
+  if (standingsOnly) {
+    sessionStorage.removeItem('ritnome-standings-gate-pass');
+    window.location.href = 'ritnome-standings-gate.html';
+    return;
+  }
   $('screen-box').style.display='none';
   $('screen-intro').style.display='flex';
 });
 
 $('introStartBtn').onclick=function(){
+  if (standingsOnly) return;
   var nameField=$('playerNameInputMain');
   var nm=nameField.value.trim();
   if(!nm){
