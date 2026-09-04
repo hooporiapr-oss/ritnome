@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Ritnome Basketball · Standings Access</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{
+    height:100%;overflow:hidden;
+    font-family:Arial,Helvetica,sans-serif;color:#fff;
+    background:#000;
+    user-select:none;-webkit-user-select:none;
+    touch-action:manipulation;
+  }
+
+  #stage{
+    position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+    padding:24px;
+    background:radial-gradient(ellipse at center,#001018 0%,#000 70%);
+  }
+
+  #panel{width:100%;max-width:400px;text-align:center}
+  .sub{font-size:.85rem;color:#9fb3c8;letter-spacing:.02em;margin-bottom:44px}
+
+  .code-panel{width:100%}
+  .code-label{font-size:.68rem;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#8892a0;margin-bottom:10px}
+  .code-input{
+    width:100%;padding:16px;border-radius:12px;border:2px solid rgba(0,229,255,.4);
+    background:rgba(255,255,255,.05);color:#fff;font-size:1.4rem;font-weight:900;
+    letter-spacing:.25em;text-transform:uppercase;text-align:center;font-family:'Courier New',monospace;
+  }
+  .code-input:focus{outline:none;border-color:#00e5ff;box-shadow:0 0 24px rgba(0,229,255,.35)}
+  .code-input.shake{animation:shake .35s}
+  @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px)}40%{transform:translateX(10px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
+
+  .enter-btn{
+    width:100%;margin-top:16px;padding:15px;border:none;border-radius:12px;
+    background:linear-gradient(135deg,#00e5ff,#0091ff);color:#031018;
+    font-size:1rem;font-weight:900;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;
+    box-shadow:0 0 30px rgba(0,229,255,.5);
+  }
+  .enter-btn:active{transform:scale(.98)}
+
+  .err{margin-top:14px;color:#ff8888;font-size:.85rem;font-weight:700;min-height:18px}
+
+  .back-link{display:inline-block;margin-top:22px;font-size:.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#8892a0;text-decoration:none}
+  .brandmark{margin-top:28px;font-size:.68rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#4a5058}
+  .brandmark b{color:#8892a0;font-style:italic}
+
+  .gate-title{font-size:1.8rem;font-weight:900;font-style:italic;letter-spacing:.02em;text-transform:uppercase;margin-bottom:10px;text-shadow:0 0 30px rgba(0,229,255,.6)}
+  .gate-title span{color:#00e5ff}
+  @media(max-width:480px){ .gate-title{font-size:1.35rem} }
+</style>
+</head>
+<body>
+
+<div id="stage">
+  <div id="panel">
+    <div class="gate-title">STANDINGS <span>ACCESS</span></div>
+    <div class="sub" id="gate-sub">A separate code from gameplay — for viewing the board only.</div>
+
+    <div class="code-panel" id="code-panel">
+      <div class="code-label">Access Code</div>
+      <input class="code-input" id="gate-code" maxlength="40" placeholder="• • • •" autocomplete="off" onkeydown="if(event.key==='Enter')tryEnter()">
+      <button class="enter-btn" onclick="tryEnter()">View Standings →</button>
+      <div class="err" id="gate-err"></div>
+    </div>
+
+    <a class="back-link" href="ritnome-index.html">← Back To Ritnome</a>
+    <div class="brandmark">Powered by <b>Gostar Digital</b></div>
+  </div>
+</div>
+
+<script>
+var $=function(id){return document.getElementById(id)};
+
+// ══════════════════════════════════════════════════════
+//  LICENSE SYSTEM — deliberately its own distinct product scope
+//  ('ritnome-standings'), separate from Ritnome's own gameplay
+//  gate ('ritnome'). A code that unlocks the game does NOT unlock
+//  this page, and vice versa, even though both live in the same
+//  Supabase licenses table. To issue / expire / revoke Standings
+//  codes, use admin.html → the Ritnome Standings Access tab.
+//
+//  On success this sets its own, separate session key
+//  ('ritnome-standings-gate-pass'), not the gameplay gate's own
+//  key. ritnome.html itself checks for either pass, and treats a
+//  visitor holding only this one as standings-only — landing them
+//  straight on the standings view with actual gameplay blocked,
+//  since this code was never meant to unlock playing the game.
+//
+//  The school name captured here is written to the SAME
+//  'ritnome-school' key the gameplay gate also uses, since the
+//  standings view itself reads that single key regardless of which
+//  gate a visitor actually came through — a Standings-only code
+//  still needs to correctly scope the board to that code's own
+//  school.
+// ══════════════════════════════════════════════════════
+var SUPABASE_URL = 'https://sdaphocueugzfvjovuxd.supabase.co';
+var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkYXBob2N1ZXVnemZ2am92dXhkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2MjQyMDgsImV4cCI6MjA5OTIwMDIwOH0.pDAzf4P6dD9eNEBlnP95SdF5BI-R84-Rdc0vKzYcn7M';
+var PRODUCT = 'ritnome-standings';
+// ══════════════════════════════════════════════════════
+
+if (sessionStorage.getItem('ritnome-standings-gate-pass') === '1') {
+  window.location.replace('ritnome.html?view=standings');
+}
+
+function tryEnter(){
+  var input = $('gate-code').value.trim();
+  if (!input){ return; }
+  $('gate-err').style.color = '';
+  $('gate-err').textContent = 'Checking…';
+
+  var url = SUPABASE_URL + '/rest/v1/licenses'
+    + '?select=code,expires_at,active,product,school_name'
+    + '&code=ilike.' + encodeURIComponent(input)
+    + '&active=eq.true'
+    + '&product=eq.' + PRODUCT;
+
+  fetch(url, {
+    headers: {
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+    }
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(rows){
+    var lic = (rows && rows.length) ? rows[0] : null;
+
+    if (!lic){ return reject('Invalid code — check with your administrator'); }
+
+    if (lic.expires_at){
+      var exp = new Date(lic.expires_at + 'T23:59:59');
+      if (new Date() > exp){ return reject('This license has expired'); }
+    }
+
+    sessionStorage.setItem('ritnome-standings-gate-pass','1');
+    sessionStorage.setItem('ritnome-standings-license', input.toUpperCase());
+    sessionStorage.setItem('ritnome-school', lic.school_name || '');
+    window.location.href = 'ritnome.html?view=standings';
+  })
+  .catch(function(){
+    reject('Connection problem — please try again');
+  });
+}
+
+function reject(msg){
+  $('gate-err').style.color = '#ff8888';
+  $('gate-err').textContent = msg;
+  var box = $('gate-code');
+  box.classList.remove('shake'); void box.offsetWidth; box.classList.add('shake');
+  box.value=''; box.focus();
+}
+</script>
+</body>
+</html>
